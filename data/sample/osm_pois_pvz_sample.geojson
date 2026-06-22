@@ -1,0 +1,65 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [37.6182, 55.7565]},
+      "properties": {"name": "Ozon", "brand": "Ozon", "shop": "outpost"}
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [37.6192, 55.7575]},
+      "properties": {"name": "Wildberries", "operator": "WB", "shop": "outpost"}
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [37.6242, 55.7625]},
+      "properties": {"name": "Яндекс Маркет ПВЗ", "brand": "Яндекс Маркет", "shop": "outpost"}
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [37.6212, 55.7595]},
+      "properties": {"name": "СДЭК", "brand": "CDEK", "office": "courier"}
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [37.6200, 55.7580]},
+      "properties": {"highway": "bus_stop", "name": "Остановка"}
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [37.6230, 55.7610]},
+      "properties": {"railway": "subway_entrance", "name": "Метро"}
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [37.6204, 55.7585]},
+      "properties": {"building": "apartments"}
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [37.6250, 55.7630]},
+      "properties": {"building": "apartments"}
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [37.6215, 55.7590]},
+      "properties": {"shop": "supermarket", "name": "Продукты"}
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [37.6220, 55.7600]},
+      "properties": {"amenity": "cafe", "name": "Кофе"}
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [37.6225, 55.7605]},
+      "properties": {"office": "company", "building": "office"}
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [37.6260, 55.7640]},
+      "properties": {"amenity": "school", "name": "Школа"}
+    }
+  ]
+}

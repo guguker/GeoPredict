@@ -1,0 +1,794 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              37.62213904882047,
+              55.75658602227812
+            ],
+            [
+              37.61971967951129,
+              55.757372044556234
+            ],
+            [
+              37.61730031020211,
+              55.75658602227812
+            ],
+            [
+              37.61730031020211,
+              55.75501397772188
+            ],
+            [
+              37.61971967951129,
+              55.75422795544377
+            ],
+            [
+              37.62213904882047,
+              55.75501397772188
+            ],
+            [
+              37.62213904882047,
+              55.75658602227812
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "h3_id": "h3fallback_9_25d3909e8c96d",
+        "suitability": 0.496,
+        "success_probability": 0.496,
+        "competition": 3,
+        "norm_competition": 0.528,
+        "competition_penalty": 0.0,
+        "market_validation": 1.0,
+        "traffic_potential": 0.2,
+        "density_score": 0.244,
+        "poi_counts": {
+          "shops": 3,
+          "cafes": 1,
+          "restaurants": 0,
+          "competitors": 3,
+          "public_transport": 1,
+          "offices": 1,
+          "residential": 1,
+          "education": 0
+        },
+        "explanation": [
+          "Средняя привлекательность локации",
+          "Конкуренция есть, но зона не выглядит перенасыщенной",
+          "Наличие ПВЗ рядом подтверждает спрос на выдачу заказов"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              37.626978407843055,
+              55.75658602227812
+            ],
+            [
+              37.624559038533874,
+              55.757372044556234
+            ],
+            [
+              37.622139669224694,
+              55.75658602227812
+            ],
+            [
+              37.622139669224694,
+              55.75501397772188
+            ],
+            [
+              37.624559038533874,
+              55.75422795544377
+            ],
+            [
+              37.626978407843055,
+              55.75501397772188
+            ],
+            [
+              37.626978407843055,
+              55.75658602227812
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "h3_id": "h3fallback_9_963dee2726353",
+        "suitability": 0.496,
+        "success_probability": 0.496,
+        "competition": 3,
+        "norm_competition": 0.528,
+        "competition_penalty": 0.0,
+        "market_validation": 1.0,
+        "traffic_potential": 0.2,
+        "density_score": 0.244,
+        "poi_counts": {
+          "shops": 3,
+          "cafes": 1,
+          "restaurants": 0,
+          "competitors": 3,
+          "public_transport": 1,
+          "offices": 1,
+          "residential": 1,
+          "education": 0
+        },
+        "explanation": [
+          "Средняя привлекательность локации",
+          "Конкуренция есть, но зона не выглядит перенасыщенной",
+          "Наличие ПВЗ рядом подтверждает спрос на выдачу заказов"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              37.619719515592436,
+              55.758944089112475
+            ],
+            [
+              37.6173,
+              55.75973011139059
+            ],
+            [
+              37.614880484407564,
+              55.758944089112475
+            ],
+            [
+              37.614880484407564,
+              55.757372044556234
+            ],
+            [
+              37.6173,
+              55.75658602227812
+            ],
+            [
+              37.619719515592436,
+              55.757372044556234
+            ],
+            [
+              37.619719515592436,
+              55.758944089112475
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "h3_id": "h3fallback_9_c80eaf6e7db7b",
+        "suitability": 0.496,
+        "success_probability": 0.496,
+        "competition": 3,
+        "norm_competition": 0.528,
+        "competition_penalty": 0.0,
+        "market_validation": 1.0,
+        "traffic_potential": 0.279,
+        "density_score": 0.302,
+        "poi_counts": {
+          "shops": 3,
+          "cafes": 1,
+          "restaurants": 0,
+          "competitors": 3,
+          "public_transport": 2,
+          "offices": 2,
+          "residential": 1,
+          "education": 0
+        },
+        "explanation": [
+          "Средняя привлекательность локации",
+          "Конкуренция есть, но зона не выглядит перенасыщенной",
+          "Наличие ПВЗ рядом подтверждает спрос на выдачу заказов",
+          "Хорошая транспортная доступность"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              37.62455887461502,
+              55.758944089112475
+            ],
+            [
+              37.62213935902258,
+              55.75973011139059
+            ],
+            [
+              37.61971984343015,
+              55.758944089112475
+            ],
+            [
+              37.61971984343015,
+              55.757372044556234
+            ],
+            [
+              37.62213935902258,
+              55.75658602227812
+            ],
+            [
+              37.62455887461502,
+              55.757372044556234
+            ],
+            [
+              37.62455887461502,
+              55.758944089112475
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "h3_id": "h3fallback_9_9dffd9ba3b735",
+        "suitability": 0.496,
+        "success_probability": 0.496,
+        "competition": 4,
+        "norm_competition": 0.632,
+        "competition_penalty": 0.393,
+        "market_validation": 1.0,
+        "traffic_potential": 0.293,
+        "density_score": 0.33,
+        "poi_counts": {
+          "shops": 4,
+          "cafes": 1,
+          "restaurants": 0,
+          "competitors": 4,
+          "public_transport": 2,
+          "offices": 2,
+          "residential": 1,
+          "education": 0
+        },
+        "explanation": [
+          "Средняя привлекательность локации",
+          "Высокая концентрация конкурентов снижает оценку",
+          "Наличие ПВЗ рядом подтверждает спрос на выдачу заказов",
+          "Хорошая транспортная доступность"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              37.6293982336376,
+              55.758944089112475
+            ],
+            [
+              37.626978718045166,
+              55.75973011139059
+            ],
+            [
+              37.62455920245273,
+              55.758944089112475
+            ],
+            [
+              37.62455920245273,
+              55.757372044556234
+            ],
+            [
+              37.626978718045166,
+              55.75658602227812
+            ],
+            [
+              37.6293982336376,
+              55.757372044556234
+            ],
+            [
+              37.6293982336376,
+              55.758944089112475
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "h3_id": "h3fallback_9_e320a5d7e9b06",
+        "suitability": 0.494,
+        "success_probability": 0.494,
+        "competition": 2,
+        "norm_competition": 0.393,
+        "competition_penalty": 0.0,
+        "market_validation": 1.0,
+        "traffic_potential": 0.264,
+        "density_score": 0.274,
+        "poi_counts": {
+          "shops": 2,
+          "cafes": 1,
+          "restaurants": 0,
+          "competitors": 2,
+          "public_transport": 2,
+          "offices": 2,
+          "residential": 1,
+          "education": 0
+        },
+        "explanation": [
+          "Средняя привлекательность локации",
+          "Конкуренция есть, но зона не выглядит перенасыщенной",
+          "Наличие ПВЗ рядом подтверждает спрос на выдачу заказов",
+          "Хорошая транспортная доступность"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              37.622139341408776,
+              55.76130215594683
+            ],
+            [
+              37.61971967951129,
+              55.76208817822494
+            ],
+            [
+              37.61730001761381,
+              55.76130215594683
+            ],
+            [
+              37.61730001761381,
+              55.75973011139059
+            ],
+            [
+              37.61971967951129,
+              55.758944089112475
+            ],
+            [
+              37.622139341408776,
+              55.75973011139059
+            ],
+            [
+              37.622139341408776,
+              55.76130215594683
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "h3_id": "h3fallback_9_87d8247b6e0a4",
+        "suitability": 0.496,
+        "success_probability": 0.496,
+        "competition": 4,
+        "norm_competition": 0.632,
+        "competition_penalty": 0.393,
+        "market_validation": 1.0,
+        "traffic_potential": 0.315,
+        "density_score": 0.356,
+        "poi_counts": {
+          "shops": 4,
+          "cafes": 1,
+          "restaurants": 0,
+          "competitors": 4,
+          "public_transport": 2,
+          "offices": 2,
+          "residential": 2,
+          "education": 0
+        },
+        "explanation": [
+          "Средняя привлекательность локации",
+          "Высокая концентрация конкурентов снижает оценку",
+          "Наличие ПВЗ рядом подтверждает спрос на выдачу заказов",
+          "Хорошая транспортная доступность"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              37.62697870043136,
+              55.76130215594683
+            ],
+            [
+              37.624559038533874,
+              55.76208817822494
+            ],
+            [
+              37.62213937663639,
+              55.76130215594683
+            ],
+            [
+              37.62213937663639,
+              55.75973011139059
+            ],
+            [
+              37.624559038533874,
+              55.758944089112475
+            ],
+            [
+              37.62697870043136,
+              55.75973011139059
+            ],
+            [
+              37.62697870043136,
+              55.76130215594683
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "h3_id": "h3fallback_9_eefec99ae2d66",
+        "suitability": 0.496,
+        "success_probability": 0.496,
+        "competition": 3,
+        "norm_competition": 0.528,
+        "competition_penalty": 0.0,
+        "market_validation": 1.0,
+        "traffic_potential": 0.325,
+        "density_score": 0.356,
+        "poi_counts": {
+          "shops": 3,
+          "cafes": 1,
+          "restaurants": 0,
+          "competitors": 3,
+          "public_transport": 2,
+          "offices": 2,
+          "residential": 2,
+          "education": 1
+        },
+        "explanation": [
+          "Средняя привлекательность локации",
+          "Конкуренция есть, но зона не выглядит перенасыщенной",
+          "Наличие ПВЗ рядом подтверждает спрос на выдачу заказов",
+          "Хорошая транспортная доступность"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              37.619719808224325,
+              55.76366022278118
+            ],
+            [
+              37.6173,
+              55.7644462450593
+            ],
+            [
+              37.614880191775676,
+              55.76366022278118
+            ],
+            [
+              37.614880191775676,
+              55.76208817822494
+            ],
+            [
+              37.6173,
+              55.76130215594683
+            ],
+            [
+              37.619719808224325,
+              55.76208817822494
+            ],
+            [
+              37.619719808224325,
+              55.76366022278118
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "h3_id": "h3fallback_9_9e665569bb305",
+        "suitability": 0.494,
+        "success_probability": 0.494,
+        "competition": 2,
+        "norm_competition": 0.393,
+        "competition_penalty": 0.0,
+        "market_validation": 1.0,
+        "traffic_potential": 0.187,
+        "density_score": 0.213,
+        "poi_counts": {
+          "shops": 1,
+          "cafes": 1,
+          "restaurants": 0,
+          "competitors": 2,
+          "public_transport": 1,
+          "offices": 2,
+          "residential": 1,
+          "education": 0
+        },
+        "explanation": [
+          "Средняя привлекательность локации",
+          "Конкуренция есть, но зона не выглядит перенасыщенной",
+          "Наличие ПВЗ рядом подтверждает спрос на выдачу заказов"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              37.62455916724691,
+              55.76366022278118
+            ],
+            [
+              37.62213935902258,
+              55.7644462450593
+            ],
+            [
+              37.61971955079826,
+              55.76366022278118
+            ],
+            [
+              37.61971955079826,
+              55.76208817822494
+            ],
+            [
+              37.62213935902258,
+              55.76130215594683
+            ],
+            [
+              37.62455916724691,
+              55.76208817822494
+            ],
+            [
+              37.62455916724691,
+              55.76366022278118
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "h3_id": "h3fallback_9_cfb3be3aab378",
+        "suitability": 0.494,
+        "success_probability": 0.494,
+        "competition": 2,
+        "norm_competition": 0.393,
+        "competition_penalty": 0.0,
+        "market_validation": 1.0,
+        "traffic_potential": 0.251,
+        "density_score": 0.302,
+        "poi_counts": {
+          "shops": 2,
+          "cafes": 1,
+          "restaurants": 0,
+          "competitors": 2,
+          "public_transport": 1,
+          "offices": 2,
+          "residential": 2,
+          "education": 1
+        },
+        "explanation": [
+          "Средняя привлекательность локации",
+          "Конкуренция есть, но зона не выглядит перенасыщенной",
+          "Наличие ПВЗ рядом подтверждает спрос на выдачу заказов"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              37.62939852626949,
+              55.76366022278118
+            ],
+            [
+              37.626978718045166,
+              55.7644462450593
+            ],
+            [
+              37.62455890982084,
+              55.76366022278118
+            ],
+            [
+              37.62455890982084,
+              55.76208817822494
+            ],
+            [
+              37.626978718045166,
+              55.76130215594683
+            ],
+            [
+              37.62939852626949,
+              55.76208817822494
+            ],
+            [
+              37.62939852626949,
+              55.76366022278118
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "h3_id": "h3fallback_9_705ac7f1d1759",
+        "suitability": 0.494,
+        "success_probability": 0.494,
+        "competition": 1,
+        "norm_competition": 0.221,
+        "competition_penalty": 0.0,
+        "market_validation": 0.5,
+        "traffic_potential": 0.193,
+        "density_score": 0.213,
+        "poi_counts": {
+          "shops": 1,
+          "cafes": 1,
+          "restaurants": 0,
+          "competitors": 1,
+          "public_transport": 1,
+          "offices": 1,
+          "residential": 1,
+          "education": 1
+        },
+        "explanation": [
+          "Средняя привлекательность локации",
+          "Конкуренция есть, но зона не выглядит перенасыщенной",
+          "Наличие ПВЗ рядом подтверждает спрос на выдачу заказов"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              37.62213963408425,
+              55.76601828961554
+            ],
+            [
+              37.61971967951129,
+              55.76680431189365
+            ],
+            [
+              37.617299724938334,
+              55.76601828961554
+            ],
+            [
+              37.617299724938334,
+              55.7644462450593
+            ],
+            [
+              37.61971967951129,
+              55.76366022278118
+            ],
+            [
+              37.62213963408425,
+              55.7644462450593
+            ],
+            [
+              37.62213963408425,
+              55.76601828961554
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "h3_id": "h3fallback_9_996d764e124bb",
+        "suitability": 0.445,
+        "success_probability": 0.445,
+        "competition": 1,
+        "norm_competition": 0.221,
+        "competition_penalty": 0.0,
+        "market_validation": 0.5,
+        "traffic_potential": 0.071,
+        "density_score": 0.113,
+        "poi_counts": {
+          "shops": 1,
+          "cafes": 0,
+          "restaurants": 0,
+          "competitors": 1,
+          "public_transport": 0,
+          "offices": 0,
+          "residential": 1,
+          "education": 1
+        },
+        "explanation": [
+          "Средняя привлекательность локации",
+          "Конкуренция есть, но зона не выглядит перенасыщенной",
+          "Наличие ПВЗ рядом подтверждает спрос на выдачу заказов",
+          "Мало открытых POI-данных вокруг точки"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              37.62697899310683,
+              55.76601828961554
+            ],
+            [
+              37.624559038533874,
+              55.76680431189365
+            ],
+            [
+              37.62213908396092,
+              55.76601828961554
+            ],
+            [
+              37.62213908396092,
+              55.7644462450593
+            ],
+            [
+              37.624559038533874,
+              55.76366022278118
+            ],
+            [
+              37.62697899310683,
+              55.7644462450593
+            ],
+            [
+              37.62697899310683,
+              55.76601828961554
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "h3_id": "h3fallback_9_db62804575e96",
+        "suitability": 0.494,
+        "success_probability": 0.494,
+        "competition": 1,
+        "norm_competition": 0.221,
+        "competition_penalty": 0.0,
+        "market_validation": 0.5,
+        "traffic_potential": 0.153,
+        "density_score": 0.148,
+        "poi_counts": {
+          "shops": 1,
+          "cafes": 0,
+          "restaurants": 0,
+          "competitors": 1,
+          "public_transport": 1,
+          "offices": 0,
+          "residential": 1,
+          "education": 1
+        },
+        "explanation": [
+          "Средняя привлекательность локации",
+          "Конкуренция есть, но зона не выглядит перенасыщенной",
+          "Наличие ПВЗ рядом подтверждает спрос на выдачу заказов",
+          "Мало открытых POI-данных вокруг точки"
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "total_hexagons": 12,
+    "h3_resolution": 9,
+    "avg_suitability": 0.491,
+    "business_type": "pickup_point",
+    "data_sources": [
+      "osm"
+    ],
+    "model_active": true,
+    "model_type": "GradientBoostingRegressorLite",
+    "model_version": "geo-boost-lite-v1",
+    "target_type": "proxy_location_success",
+    "grid_backend": "fallback_hex"
+  }
+}
