@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 
+from geopredict_ml.business import UnsupportedBusinessTypeError, business_type_catalog, supported_business_types
 from geopredict_ml.osm import fetch_overpass_geojson
 from geopredict_ml.pipeline import analyze_request
 
@@ -109,6 +110,28 @@ RESPONSE_EXAMPLE = {
     },
 }
 
+BUSINESS_TYPES_EXAMPLE = {
+    "total": 20,
+    "business_types": [
+        {
+            "business_type": "pickup_point",
+            "title": "Пункт выдачи заказов",
+            "category": "marketplace_logistics",
+            "aliases": ["pickup_point", "pvz", "пвз", "ozon", "wildberries"],
+            "examples": ["Ozon", "Wildberries", "Яндекс Маркет", "СДЭК", "Boxberry"],
+            "radius_m": 500,
+        },
+        {
+            "business_type": "coffee_shop",
+            "title": "Кофейня",
+            "category": "food_service",
+            "aliases": ["coffee_shop", "coffee", "cafe", "кофейня", "кофе"],
+            "examples": ["кофейня у дома", "кофе с собой", "specialty coffee"],
+            "radius_m": 350,
+        },
+    ],
+}
+
 DEFAULT_CORS_ORIGINS = (
     "http://localhost:3000",
     "http://127.0.0.1:3000",
@@ -155,8 +178,11 @@ if FastAPI:
         )
         business_type: str = Field(
             "pickup_point",
-            description="Business type. For PVZ use pickup_point, pvz, ozon, wb, wildberries, yandex market aliases.",
-            examples=["pickup_point"],
+            description=(
+                "Business type or alias. Use GET /business-types for the fixed catalog. "
+                f"Primary values: {', '.join(supported_business_types())}."
+            ),
+            examples=["pickup_point", "coffee_shop", "пивнуха"],
         )
         h3_resolution: int = Field(9, ge=7, le=10, description="H3 grid resolution. MVP default is 9.")
         use_live_osm: bool = Field(
@@ -184,6 +210,24 @@ if FastAPI:
         allow_headers=["*"],
     )
 
+    @app.get(
+        "/business-types",
+        tags=["analysis"],
+        summary="List supported business types",
+        response_description="Supported business catalog for analyze requests.",
+        openapi_extra={
+            "responses": {
+                "200": {
+                    "description": "Supported business catalog",
+                    "content": {"application/json": {"example": BUSINESS_TYPES_EXAMPLE}},
+                }
+            }
+        },
+    )
+    def business_types_endpoint() -> dict:
+        catalog = business_type_catalog()
+        return {"total": len(catalog), "business_types": catalog}
+
     @app.get("/health", tags=["system"], summary="Health check")
     def health() -> dict:
         return {"status": "ok", "service": "geopredict-api", "model_active": True}
@@ -191,7 +235,7 @@ if FastAPI:
     @app.post(
         "/analyze",
         tags=["analysis"],
-        summary="Analyze territory suitability for a pickup point or retail business",
+        summary="Analyze territory suitability for a supported business type",
         response_description="GeoJSON FeatureCollection with suitability scores by H3 cell.",
         openapi_extra={
             "requestBody": {
@@ -219,6 +263,15 @@ if FastAPI:
                 data_sources=data_sources,
                 data_warnings=data_warnings,
             )
+        except UnsupportedBusinessTypeError as exc:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "code": "unsupported_business_type",
+                    "message": str(exc),
+                    "supported_business_types": list(exc.supported_business_types),
+                },
+            ) from exc
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         except Exception as exc:
@@ -229,3 +282,8 @@ else:
 
 def analyze(payload: dict, pois_geojson: dict | None = None) -> dict:
     return analyze_request(payload, pois_geojson=pois_geojson)
+
+
+def business_types() -> dict:
+    catalog = business_type_catalog()
+    return {"total": len(catalog), "business_types": catalog}

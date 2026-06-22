@@ -2,7 +2,7 @@ import os
 import unittest
 from unittest.mock import patch
 
-from api.analyze import DEFAULT_CORS_ORIGINS, get_cors_origins, resolve_poi_source
+from api.analyze import DEFAULT_CORS_ORIGINS, business_types, get_cors_origins, resolve_poi_source
 
 
 class ApiConfigTest(unittest.TestCase):
@@ -43,6 +43,13 @@ class ApiConfigTest(unittest.TestCase):
         self.assertIsNone(pois)
         self.assertEqual(data_sources, [])
         self.assertEqual(data_warnings, [])
+
+    def test_business_types_helper_returns_catalog_for_frontend(self):
+        result = business_types()
+
+        self.assertEqual(result["total"], 20)
+        self.assertEqual(len(result["business_types"]), 20)
+        self.assertEqual(result["business_types"][0]["business_type"], "pickup_point")
 
 
 if __name__ == "__main__":

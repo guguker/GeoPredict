@@ -43,7 +43,41 @@ http://localhost:8000/openapi.json
 }
 ```
 
-Ответ содержит:
+`business_type` можно передавать как основной код или алиас. Например: `pickup_point`, `pvz`, `ozon`, `coffee_shop`, `кофейня`, `beer_store`, `пивнуха`, `dental_clinic`, `стоматология`.
+
+Если тип бизнеса не поддержан, API должен вернуть `422`:
+
+```json
+{
+  "detail": {
+    "code": "unsupported_business_type",
+    "message": "Unsupported business_type: '...'",
+    "supported_business_types": ["pickup_point", "coffee_shop", "beer_store"]
+  }
+}
+```
+
+### `GET /business-types`
+
+Возвращает фиксированный каталог из 20 поддерживаемых типов бизнеса для UI-списка:
+
+```json
+{
+  "total": 20,
+  "business_types": [
+    {
+      "business_type": "pickup_point",
+      "title": "Пункт выдачи заказов",
+      "category": "marketplace_logistics",
+      "aliases": ["pickup_point", "pvz", "пвз", "ozon"],
+      "examples": ["Ozon", "Wildberries", "Яндекс Маркет", "СДЭК", "Boxberry"],
+      "radius_m": 500
+    }
+  ]
+}
+```
+
+Ответ `POST /analyze` содержит:
 
 - `features[]` — GeoJSON-ячейки с v2-оценкой `suitability`, сырым `model_score`, строгим `selection_score`, уверенностью данных `data_confidence`, рангом `rank`, кодом рекомендации `recommendation`, объяснениями и счетчиками POI.
 - `metadata.top_candidates` — до 10 лучших ячеек по оценке модели для быстрого вывода списка приоритетных зон.

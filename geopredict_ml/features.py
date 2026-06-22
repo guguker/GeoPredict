@@ -48,9 +48,11 @@ def categorize_poi(tags: dict[str, Any], profile: BusinessProfile) -> PoiCategor
     normalized_tags = {normalize_text(key): normalize_text(value) for key, value in tags.items()}
     values = set(normalized_tags.values())
     combined = " ".join([*normalized_tags.keys(), *normalized_tags.values()])
+    competitor_keywords = tuple(normalize_text(keyword) for keyword in profile.competitor_keywords)
+    competitor_tag_values = {normalize_text(value) for value in profile.competitor_tag_values}
 
-    competitor = any(keyword in combined for keyword in profile.competitor_keywords) or bool(
-        values.intersection(profile.competitor_tag_values)
+    competitor = any(keyword in combined for keyword in competitor_keywords) or bool(
+        values.intersection(competitor_tag_values)
     )
 
     amenity = normalized_tags.get("amenity", "")

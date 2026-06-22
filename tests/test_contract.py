@@ -1,5 +1,6 @@
 import unittest
 
+from geopredict_ml.business import UnsupportedBusinessTypeError
 from geopredict_ml.pipeline import _recommendation_for_candidate, analyze_request
 
 
@@ -122,6 +123,14 @@ class AnalyzeContractTest(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             analyze_request(bad_request, pois_geojson=SAMPLE_POIS)
+
+    def test_rejects_unsupported_business_type(self):
+        bad_request = SAMPLE_REQUEST | {"business_type": "unknown_business"}
+
+        with self.assertRaises(UnsupportedBusinessTypeError) as context:
+            analyze_request(bad_request, pois_geojson=SAMPLE_POIS)
+
+        self.assertIn("coffee_shop", context.exception.supported_business_types)
 
 
 if __name__ == "__main__":
