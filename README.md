@@ -67,7 +67,17 @@ GET /business-types
 GET /business-types?query=кофе
 ```
 
-Если пользователь введет свободный текст, фронт может сначала запросить `GET /business-types?query=...` и показать подсказки. Если в `/analyze` все равно придет неподдержанный тип, API вернет `422` с кодом `unsupported_business_type`, списком допустимых `supported_business_types` и массивом `suggestions`.
+Если пользователь введет свободный текст, фронт может сначала запросить `GET /business-types?query=...` и показать подсказки. По умолчанию `/analyze` тоже принимает неподдержанный `business_type`: API создаёт временный `custom_osm` профиль и ищет похожие точки в OSM по `name`, `brand`, `shop`, `amenity` и другим тегам. В ответе тогда будет `metadata.is_custom_business = true`, `business_type = "custom_osm"` и `business_query` с исходной строкой.
+
+Если нужен строго только фиксированный каталог, передайте:
+
+```json
+{
+  "allow_custom_business": false
+}
+```
+
+Тогда неподдержанный тип вернет `422` с кодом `unsupported_business_type`, списком допустимых `supported_business_types` и массивом `suggestions`.
 
 ## Быстрый локальный прогон без сети
 

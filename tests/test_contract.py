@@ -127,12 +127,21 @@ class AnalyzeContractTest(unittest.TestCase):
             analyze_request(bad_request, pois_geojson=SAMPLE_POIS)
 
     def test_rejects_unsupported_business_type(self):
-        bad_request = SAMPLE_REQUEST | {"business_type": "unknown_business"}
+        bad_request = SAMPLE_REQUEST | {"business_type": "unknown_business", "allow_custom_business": False}
 
         with self.assertRaises(UnsupportedBusinessTypeError) as context:
             analyze_request(bad_request, pois_geojson=SAMPLE_POIS)
 
         self.assertIn("coffee_shop", context.exception.supported_business_types)
+
+    def test_unknown_business_type_uses_custom_osm_profile_by_default(self):
+        request = SAMPLE_REQUEST | {"business_type": "рыболовный магазин"}
+        result = analyze_request(request, pois_geojson=SAMPLE_POIS)
+
+        self.assertEqual(result["metadata"]["business_type"], "custom_osm")
+        self.assertTrue(result["metadata"]["is_custom_business"])
+        self.assertEqual(result["metadata"]["business_query"], "рыболовный магазин")
+        self.assertEqual(result["metadata"]["model_source"], "reference_in_memory")
 
 
 if __name__ == "__main__":

@@ -56,6 +56,8 @@ class ApiConfigTest(unittest.TestCase):
 
         self.assertGreaterEqual(result["total"], 1)
         self.assertEqual(result["business_types"][0]["business_type"], "coffee_shop")
+        self.assertEqual(result["custom_candidate"]["business_type"], "custom_osm")
+        self.assertEqual(result["custom_candidate"]["source_query"], "кофе")
 
 
 if __name__ == "__main__":

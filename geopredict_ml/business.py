@@ -25,6 +25,8 @@ class BusinessProfile:
     target_weights: dict[str, float] = field(default_factory=dict)
     category: str = "local_business"
     examples: tuple[str, ...] = ()
+    is_custom: bool = False
+    source_query: str | None = None
 
 
 class UnsupportedBusinessTypeError(ValueError):
@@ -186,6 +188,8 @@ def _profile(
     target_weights: dict[str, float],
     category: str,
     examples: tuple[str, ...] = (),
+    is_custom: bool = False,
+    source_query: str | None = None,
 ) -> BusinessProfile:
     return BusinessProfile(
         business_type=business_type,
@@ -200,6 +204,8 @@ def _profile(
         target_weights=target_weights,
         category=category,
         examples=examples,
+        is_custom=is_custom,
+        source_query=source_query,
     )
 
 
@@ -489,6 +495,30 @@ RETAIL_PROFILE = _profile(
 )
 
 
+CUSTOM_OSM_HINTS = (
+    (("рыбал", "fishing", "рыболов"), ("fishing", "рыболовный", "рыбалка"), ("fishing",)),
+    (("одеж", "clothes", "fashion"), ("clothes", "fashion", "одежда", "бутик"), ("clothes", "fashion")),
+    (("обув", "shoes"), ("shoes", "обувь"), ("shoes",)),
+    (("электрон", "electronics", "гаджет"), ("electronics", "электроника", "гаджеты"), ("electronics",)),
+    (("телефон", "mobile"), ("mobile_phone", "phone", "телефон", "связной"), ("mobile_phone",)),
+    (("книг", "book"), ("books", "bookstore", "книги", "книжный"), ("books",)),
+    (("мебел", "furniture"), ("furniture", "мебель"), ("furniture",)),
+    (("ювел", "jewel"), ("jewelry", "jewellery", "ювелирный"), ("jewelry", "jewellery")),
+    (("ремонт", "repair"), ("repair", "ремонт", "service"), ("repair",)),
+    (("атель", "tailor"), ("tailor", "atelier", "ателье", "пошив"), ("tailor",)),
+    (("вейп", "vape"), ("vape", "вейп", "электронные сигареты"), ("e-cigarette", "vape")),
+    (("кальян", "hookah"), ("hookah", "shisha", "кальян"), ("hookah",)),
+    (("тату", "tattoo"), ("tattoo", "тату"), ("tattoo",)),
+    (("массаж", "massage"), ("massage", "массаж"), ("massage",)),
+    (("банк", "bank"), ("bank", "банк"), ("bank",)),
+    (("ломбард", "pawn"), ("pawnbroker", "pawnshop", "ломбард"), ("pawnbroker",)),
+    (("отель", "hotel", "гостиниц"), ("hotel", "hostel", "отель", "гостиница"), ("hotel", "hostel")),
+    (("канц", "stationery"), ("stationery", "канцтовары"), ("stationery",)),
+    (("велосипед", "bike", "bicycle"), ("bicycle", "bike", "велосипед"), ("bicycle",)),
+    (("компьютер", "computer"), ("computer", "компьютер"), ("computer",)),
+)
+
+
 PROFILE_LIST = (
     PICKUP_POINT_PROFILE,
     COFFEE_SHOP_PROFILE,
@@ -548,6 +578,22 @@ def suggest_business_profiles(query: str, limit: int = 5) -> list[dict[str, obje
     return business_type_catalog(tuple(profile for _score, profile in scored_profiles[:limit]))
 
 
+def custom_business_candidate(query: str) -> dict[str, object]:
+    profile = build_custom_business_profile(query)
+    return {
+        "business_type": profile.business_type,
+        "title": profile.title,
+        "category": profile.category,
+        "aliases": list(profile.aliases),
+        "examples": list(profile.examples),
+        "radius_m": profile.radius_m,
+        "is_custom": True,
+        "source_query": profile.source_query,
+        "osm_keywords": list(profile.competitor_keywords[:12]),
+        "osm_tag_values": list(profile.competitor_tag_values),
+    }
+
+
 def get_business_profile(business_type: str) -> BusinessProfile:
     normalized = normalize_text(business_type)
     for profile in PROFILE_LIST:
@@ -556,6 +602,42 @@ def get_business_profile(business_type: str) -> BusinessProfile:
             return profile
     suggestions = tuple(item["business_type"] for item in suggest_business_profiles(business_type, limit=5))
     raise UnsupportedBusinessTypeError(business_type, supported_business_types(), suggestions)
+
+
+def resolve_business_profile(business_type: str, allow_custom: bool = True) -> BusinessProfile:
+    try:
+        return get_business_profile(business_type)
+    except UnsupportedBusinessTypeError:
+        if allow_custom and normalize_text(business_type):
+            return build_custom_business_profile(business_type)
+        raise
+
+
+def build_custom_business_profile(query: str) -> BusinessProfile:
+    raw_query = str(query).strip()
+    normalized_query = normalize_text(query)
+    tokens = tuple(token for token in normalized_query.split() if len(token) >= 3)
+    hint_keywords, hint_tag_values = _custom_osm_terms(normalized_query)
+    keywords = _dedupe_terms((normalized_query, *tokens, *hint_keywords))
+    tag_values = _dedupe_terms((*tokens, *hint_tag_values))
+    aliases = _dedupe_terms((raw_query, normalized_query))
+
+    return _profile(
+        "custom_osm",
+        f"Пользовательский бизнес: {raw_query}",
+        aliases,
+        keywords,
+        tag_values,
+        500,
+        5.0,
+        4,
+        2,
+        CONVENIENCE_RETAIL_WEIGHTS,
+        "custom_osm_search",
+        (raw_query, "OSM name/brand/tag search"),
+        is_custom=True,
+        source_query=raw_query,
+    )
 
 
 def _profile_match_score(profile: BusinessProfile, normalized_query: str) -> int:
@@ -579,3 +661,24 @@ def _profile_match_score(profile: BusinessProfile, normalized_query: str) -> int
         elif any(len(token) >= 3 and token in field for token in normalized_query.split()):
             score = max(score, 35)
     return score
+
+
+def _custom_osm_terms(normalized_query: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    keywords: list[str] = []
+    tag_values: list[str] = []
+    for triggers, hint_keywords, hint_tag_values in CUSTOM_OSM_HINTS:
+        if any(normalize_text(trigger) in normalized_query for trigger in triggers):
+            keywords.extend(hint_keywords)
+            tag_values.extend(hint_tag_values)
+    return tuple(keywords), tuple(tag_values)
+
+
+def _dedupe_terms(terms: tuple[str, ...]) -> tuple[str, ...]:
+    deduped = []
+    seen = set()
+    for term in terms:
+        normalized = normalize_text(term)
+        if normalized and normalized not in seen:
+            deduped.append(normalized)
+            seen.add(normalized)
+    return tuple(deduped)

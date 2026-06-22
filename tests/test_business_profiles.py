@@ -2,8 +2,10 @@ import unittest
 
 from geopredict_ml.business import (
     UnsupportedBusinessTypeError,
+    build_custom_business_profile,
     business_type_catalog,
     get_business_profile,
+    resolve_business_profile,
     suggest_business_profiles,
     supported_business_types,
 )
@@ -42,6 +44,18 @@ class BusinessProfileCatalogTest(unittest.TestCase):
 
         self.assertEqual(coffee_suggestions[0]["business_type"], "coffee_shop")
         self.assertEqual(beer_suggestions[0]["business_type"], "beer_store")
+
+    def test_resolve_business_profile_builds_custom_osm_profile(self):
+        profile = resolve_business_profile("рыболовный магазин")
+
+        self.assertEqual(profile.business_type, "custom_osm")
+        self.assertTrue(profile.is_custom)
+        self.assertIn("fishing", profile.competitor_tag_values)
+
+    def test_custom_osm_profile_detects_hint_tags(self):
+        profile = build_custom_business_profile("рыболовный магазин")
+
+        self.assertTrue(categorize_poi({"shop": "fishing", "name": "Fishing Pro"}, profile).is_competitor)
 
     def test_business_specific_competitor_detection(self):
         coffee = get_business_profile("coffee_shop")

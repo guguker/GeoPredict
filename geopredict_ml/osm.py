@@ -25,6 +25,7 @@ def build_overpass_query(geometry: dict[str, Any]) -> str:
   nwr(poly:"{polygon}")["healthcare"];
   nwr(poly:"{polygon}")["craft"];
   nwr(poly:"{polygon}")["sport"];
+  nwr(poly:"{polygon}")["tourism"];
   nwr(poly:"{polygon}")["public_transport"];
   nwr(poly:"{polygon}")["highway"="bus_stop"];
   nwr(poly:"{polygon}")["railway"];

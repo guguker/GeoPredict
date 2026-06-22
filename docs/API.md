@@ -45,7 +45,15 @@ http://localhost:8000/openapi.json
 
 `business_type` можно передавать как основной код или алиас. Например: `pickup_point`, `pvz`, `ozon`, `coffee_shop`, `кофейня`, `beer_store`, `пивнуха`, `dental_clinic`, `стоматология`.
 
-Если тип бизнеса не поддержан, API должен вернуть `422`:
+Если `business_type` не найден в фиксированном каталоге, `/analyze` по умолчанию создает `custom_osm` профиль и ищет похожие объекты в OSM по пользовательской строке, названиям, брендам и тегам. Для строгого режима каталога передайте:
+
+```json
+{
+  "allow_custom_business": false
+}
+```
+
+В строгом режиме неподдержанный тип бизнеса вернет `422`:
 
 ```json
 {
@@ -60,7 +68,7 @@ http://localhost:8000/openapi.json
 
 ### `GET /business-types`
 
-Возвращает фиксированный каталог из 20 поддерживаемых типов бизнеса для UI-списка. Опционально принимает `query`, чтобы подсказывать профиль по свободному пользовательскому вводу:
+Возвращает фиксированный каталог из 20 поддерживаемых типов бизнеса для UI-списка. Опционально принимает `query`: тогда `business_types` содержит найденные подсказки из фиксированного каталога, а `custom_candidate` описывает свободный пользовательский запрос для OSM-поиска:
 
 ```text
 GET /business-types?query=кофе
@@ -68,7 +76,7 @@ GET /business-types?query=кофе
 
 ```json
 {
-  "total": 20,
+  "total": 1,
   "business_types": [
     {
       "business_type": "pickup_point",
@@ -78,7 +86,14 @@ GET /business-types?query=кофе
       "examples": ["Ozon", "Wildberries", "Яндекс Маркет", "СДЭК", "Boxberry"],
       "radius_m": 500
     }
-  ]
+  ],
+  "custom_candidate": {
+    "business_type": "custom_osm",
+    "title": "Пользовательский бизнес: кофе",
+    "category": "custom_osm_search",
+    "source_query": "кофе",
+    "is_custom": true
+  }
 }
 ```
 

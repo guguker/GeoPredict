@@ -5,6 +5,7 @@ import os
 from geopredict_ml.business import (
     UnsupportedBusinessTypeError,
     business_type_catalog,
+    custom_business_candidate,
     suggest_business_profiles,
     supported_business_types,
 )
@@ -42,6 +43,7 @@ REQUEST_EXAMPLE = {
     "business_type": "pickup_point",
     "h3_resolution": 9,
     "use_live_osm": True,
+    "allow_custom_business": True,
 }
 
 RESPONSE_EXAMPLE = {
@@ -86,6 +88,10 @@ RESPONSE_EXAMPLE = {
         "h3_resolution": 9,
         "avg_suitability": 0.654,
         "business_type": "pickup_point",
+        "business_title": "Пункт выдачи заказов",
+        "business_category": "marketplace_logistics",
+        "business_query": None,
+        "is_custom_business": False,
         "data_sources": ["osm"],
         "data_status": "live",
         "data_warnings": [],
@@ -138,6 +144,13 @@ BUSINESS_TYPES_EXAMPLE = {
             "radius_m": 350,
         },
     ],
+    "custom_candidate": {
+        "business_type": "custom_osm",
+        "title": "Пользовательский бизнес: кофе",
+        "category": "custom_osm_search",
+        "source_query": "кофе",
+        "is_custom": True,
+    },
 }
 
 DEFAULT_CORS_ORIGINS = (
@@ -197,6 +210,13 @@ if FastAPI:
             True,
             description="When true, the API fetches OpenStreetMap POIs through Overpass before scoring.",
         )
+        allow_custom_business: bool = Field(
+            True,
+            description=(
+                "When true, an unsupported business_type creates a custom OSM search profile instead of "
+                "returning 422."
+            ),
+        )
 
     app = FastAPI(
         title="GeoPredict Analyze API",
@@ -234,7 +254,10 @@ if FastAPI:
     )
     def business_types_endpoint(query: str | None = Query(None, description="Optional user search text.")) -> dict:
         catalog = suggest_business_profiles(query, limit=20) if query else business_type_catalog()
-        return {"total": len(catalog), "business_types": catalog}
+        result = {"total": len(catalog), "business_types": catalog}
+        if query:
+            result["custom_candidate"] = custom_business_candidate(query)
+        return result
 
     @app.get("/health", tags=["system"], summary="Health check")
     def health() -> dict:
@@ -295,4 +318,7 @@ def analyze(payload: dict, pois_geojson: dict | None = None) -> dict:
 
 def business_types(query: str | None = None) -> dict:
     catalog = suggest_business_profiles(query, limit=20) if query else business_type_catalog()
-    return {"total": len(catalog), "business_types": catalog}
+    result = {"total": len(catalog), "business_types": catalog}
+    if query:
+        result["custom_candidate"] = custom_business_candidate(query)
+    return result

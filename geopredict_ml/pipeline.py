@@ -4,7 +4,7 @@ import math
 from pathlib import Path
 from typing import Any
 
-from .business import BusinessProfile, get_business_profile
+from .business import BusinessProfile, resolve_business_profile
 from .explain import build_explanation
 from .features import compute_cell_features, normalize_geojson_pois, saturating_count
 from .geo import clamp
@@ -29,7 +29,8 @@ def analyze_request(
         raise ValueError("business_type is required")
 
     resolution = int(request_payload.get("h3_resolution", 9))
-    profile = get_business_profile(str(business_type))
+    allow_custom_business = bool(request_payload.get("allow_custom_business", True))
+    profile = resolve_business_profile(str(business_type), allow_custom=allow_custom_business)
     cells = polygon_to_grid_cells(geometry, resolution=resolution, max_cells=max_cells)
     pois = normalize_geojson_pois(pois_geojson)
     resolved_data_sources = data_sources if data_sources is not None else (["osm"] if pois_geojson else [])
@@ -82,6 +83,10 @@ def analyze_request(
             "avg_suitability": avg_suitability,
             "avg_model_score": avg_model_score,
             "business_type": profile.business_type,
+            "business_title": profile.title,
+            "business_category": profile.category,
+            "business_query": profile.source_query,
+            "is_custom_business": profile.is_custom,
             "data_sources": resolved_data_sources,
             "data_status": _data_status(resolved_data_sources, resolved_data_warnings),
             "data_warnings": resolved_data_warnings,
