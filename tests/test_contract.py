@@ -57,18 +57,34 @@ class AnalyzeContractTest(unittest.TestCase):
         self.assertEqual(result["metadata"]["business_type"], "pickup_point")
         self.assertTrue(result["metadata"]["model_active"])
         self.assertIn("model_version", result["metadata"])
+        self.assertIn("top_candidates", result["metadata"])
+        self.assertIn("recommendation_counts", result["metadata"])
+        self.assertGreaterEqual(len(result["metadata"]["top_candidates"]), 1)
 
         first = result["features"][0]
         self.assertEqual(first["type"], "Feature")
         self.assertEqual(first["geometry"]["type"], "Polygon")
         props = first["properties"]
         self.assertIn("h3_id", props)
+        self.assertIn("rank", props)
         self.assertIn("suitability", props)
         self.assertIn("success_probability", props)
+        self.assertIn("recommendation", props)
+        self.assertIn("recommendation_label", props)
         self.assertIn("traffic_potential", props)
         self.assertIn("density_score", props)
         self.assertIn("poi_counts", props)
         self.assertIsInstance(props["explanation"], list)
+
+    def test_top_candidate_matches_best_ranked_feature(self):
+        result = analyze_request(SAMPLE_REQUEST, pois_geojson=SAMPLE_POIS)
+
+        top = result["metadata"]["top_candidates"][0]
+        ranked_first = min(result["features"], key=lambda feature: feature["properties"]["rank"])
+
+        self.assertEqual(top["rank"], 1)
+        self.assertEqual(top["h3_id"], ranked_first["properties"]["h3_id"])
+        self.assertEqual(top["suitability"], ranked_first["properties"]["suitability"])
 
     def test_rejects_invalid_geometry(self):
         bad_request = {"geometry": {"type": "Point", "coordinates": [37.6, 55.7]}, "business_type": "pickup_point"}

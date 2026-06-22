@@ -41,8 +41,11 @@ RESPONSE_EXAMPLE = {
             "geometry": {"type": "Polygon", "coordinates": [[[37.6173, 55.7558], [37.6176, 55.7559], [37.6173, 55.7560]]]},
             "properties": {
                 "h3_id": "891f1d489ffffff",
+                "rank": 1,
                 "suitability": 0.742,
                 "success_probability": 0.742,
+                "recommendation": "promising",
+                "recommendation_label": "Перспективная зона",
                 "competition": 3,
                 "norm_competition": 0.428,
                 "competition_penalty": 0.0,
@@ -74,6 +77,21 @@ RESPONSE_EXAMPLE = {
         "model_version": "geo-boost-lite-v1",
         "target_type": "proxy_location_success",
         "grid_backend": "h3",
+        "top_candidates": [
+            {
+                "h3_id": "891f1d489ffffff",
+                "rank": 1,
+                "suitability": 0.742,
+                "recommendation": "promising",
+                "center": {"lon": 37.6173, "lat": 55.7558},
+            }
+        ],
+        "recommendation_counts": {
+            "high_priority": 4,
+            "promising": 21,
+            "manual_review": 14,
+            "low_priority": 3,
+        },
     },
 }
 
