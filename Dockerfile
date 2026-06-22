@@ -12,6 +12,7 @@ COPY geopredict_ml ./geopredict_ml
 COPY api ./api
 COPY scripts ./scripts
 COPY data/sample ./data/sample
+COPY models ./models
 COPY README.md ./
 
 EXPOSE 8000

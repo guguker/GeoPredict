@@ -51,6 +51,12 @@ class ApiConfigTest(unittest.TestCase):
         self.assertEqual(len(result["business_types"]), 20)
         self.assertEqual(result["business_types"][0]["business_type"], "pickup_point")
 
+    def test_business_types_helper_filters_by_user_query(self):
+        result = business_types(query="кофе")
+
+        self.assertGreaterEqual(result["total"], 1)
+        self.assertEqual(result["business_types"][0]["business_type"], "coffee_shop")
+
 
 if __name__ == "__main__":
     unittest.main()

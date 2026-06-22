@@ -2,13 +2,18 @@ from __future__ import annotations
 
 import os
 
-from geopredict_ml.business import UnsupportedBusinessTypeError, business_type_catalog, supported_business_types
+from geopredict_ml.business import (
+    UnsupportedBusinessTypeError,
+    business_type_catalog,
+    suggest_business_profiles,
+    supported_business_types,
+)
 from geopredict_ml.osm import fetch_overpass_geojson
 from geopredict_ml.pipeline import analyze_request
 
 
 try:
-    from fastapi import Body, FastAPI, HTTPException
+    from fastapi import Body, FastAPI, HTTPException, Query
     from fastapi.middleware.cors import CORSMiddleware
     from pydantic import BaseModel, Field
 except Exception:  # pragma: no cover - optional web dependency
@@ -18,6 +23,7 @@ except Exception:  # pragma: no cover - optional web dependency
     FastAPI = None
     Field = None
     HTTPException = Exception
+    Query = None
 
 
 REQUEST_EXAMPLE = {
@@ -87,6 +93,8 @@ RESPONSE_EXAMPLE = {
         "model_active": True,
         "model_type": "GradientBoostingRegressorLite",
         "model_version": "geo-boost-lite-v1",
+        "model_source": "registered_artifact",
+        "model_artifact_path": "models/geopredict_pvz_v1.pkl",
         "target_type": "proxy_location_success",
         "grid_backend": "h3",
         "top_candidates": [
@@ -224,8 +232,8 @@ if FastAPI:
             }
         },
     )
-    def business_types_endpoint() -> dict:
-        catalog = business_type_catalog()
+    def business_types_endpoint(query: str | None = Query(None, description="Optional user search text.")) -> dict:
+        catalog = suggest_business_profiles(query, limit=20) if query else business_type_catalog()
         return {"total": len(catalog), "business_types": catalog}
 
     @app.get("/health", tags=["system"], summary="Health check")
@@ -270,6 +278,7 @@ if FastAPI:
                     "code": "unsupported_business_type",
                     "message": str(exc),
                     "supported_business_types": list(exc.supported_business_types),
+                    "suggestions": list(exc.suggestions),
                 },
             ) from exc
         except ValueError as exc:
@@ -284,6 +293,6 @@ def analyze(payload: dict, pois_geojson: dict | None = None) -> dict:
     return analyze_request(payload, pois_geojson=pois_geojson)
 
 
-def business_types() -> dict:
-    catalog = business_type_catalog()
+def business_types(query: str | None = None) -> dict:
+    catalog = suggest_business_profiles(query, limit=20) if query else business_type_catalog()
     return {"total": len(catalog), "business_types": catalog}

@@ -4,6 +4,7 @@ from geopredict_ml.business import (
     UnsupportedBusinessTypeError,
     business_type_catalog,
     get_business_profile,
+    suggest_business_profiles,
     supported_business_types,
 )
 from geopredict_ml.features import categorize_poi
@@ -29,10 +30,18 @@ class BusinessProfileCatalogTest(unittest.TestCase):
 
     def test_unsupported_business_type_lists_supported_values(self):
         with self.assertRaises(UnsupportedBusinessTypeError) as context:
-            get_business_profile("магазин космических кораблей")
+            get_business_profile("кофе и десерты")
 
         self.assertIn("coffee_shop", context.exception.supported_business_types)
         self.assertIn("pickup_point", context.exception.supported_business_types)
+        self.assertIn("coffee_shop", context.exception.suggestions)
+
+    def test_suggest_business_profiles_for_user_query(self):
+        coffee_suggestions = suggest_business_profiles("кофе")
+        beer_suggestions = suggest_business_profiles("разливное")
+
+        self.assertEqual(coffee_suggestions[0]["business_type"], "coffee_shop")
+        self.assertEqual(beer_suggestions[0]["business_type"], "beer_store")
 
     def test_business_specific_competitor_detection(self):
         coffee = get_business_profile("coffee_shop")

@@ -52,14 +52,19 @@ http://localhost:8000/openapi.json
   "detail": {
     "code": "unsupported_business_type",
     "message": "Unsupported business_type: '...'",
-    "supported_business_types": ["pickup_point", "coffee_shop", "beer_store"]
+    "supported_business_types": ["pickup_point", "coffee_shop", "beer_store"],
+    "suggestions": ["coffee_shop"]
   }
 }
 ```
 
 ### `GET /business-types`
 
-Возвращает фиксированный каталог из 20 поддерживаемых типов бизнеса для UI-списка:
+Возвращает фиксированный каталог из 20 поддерживаемых типов бизнеса для UI-списка. Опционально принимает `query`, чтобы подсказывать профиль по свободному пользовательскому вводу:
+
+```text
+GET /business-types?query=кофе
+```
 
 ```json
 {

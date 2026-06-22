@@ -58,6 +58,8 @@ class AnalyzeContractTest(unittest.TestCase):
         self.assertEqual(result["metadata"]["business_type"], "pickup_point")
         self.assertTrue(result["metadata"]["model_active"])
         self.assertIn("model_version", result["metadata"])
+        self.assertIn("model_source", result["metadata"])
+        self.assertIn("model_artifact_path", result["metadata"])
         self.assertIn("top_candidates", result["metadata"])
         self.assertIn("recommendation_counts", result["metadata"])
         self.assertIn("selection_policy", result["metadata"])

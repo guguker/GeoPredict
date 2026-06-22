@@ -28,9 +28,15 @@ class BusinessProfile:
 
 
 class UnsupportedBusinessTypeError(ValueError):
-    def __init__(self, business_type: str, supported_business_types: tuple[str, ...]) -> None:
+    def __init__(
+        self,
+        business_type: str,
+        supported_business_types: tuple[str, ...],
+        suggestions: tuple[str, ...] = (),
+    ) -> None:
         self.business_type = business_type
         self.supported_business_types = supported_business_types
+        self.suggestions = suggestions
         super().__init__(
             f"Unsupported business_type: {business_type!r}. "
             f"Supported values: {', '.join(supported_business_types)}"
@@ -513,7 +519,7 @@ def supported_business_types() -> tuple[str, ...]:
     return tuple(profile.business_type for profile in PROFILE_LIST)
 
 
-def business_type_catalog() -> list[dict[str, object]]:
+def business_type_catalog(profiles: tuple[BusinessProfile, ...] = PROFILE_LIST) -> list[dict[str, object]]:
     return [
         {
             "business_type": profile.business_type,
@@ -523,8 +529,23 @@ def business_type_catalog() -> list[dict[str, object]]:
             "examples": list(profile.examples),
             "radius_m": profile.radius_m,
         }
-        for profile in PROFILE_LIST
+        for profile in profiles
     ]
+
+
+def suggest_business_profiles(query: str, limit: int = 5) -> list[dict[str, object]]:
+    normalized_query = normalize_text(query)
+    if not normalized_query:
+        return business_type_catalog(PROFILE_LIST[:limit])
+
+    scored_profiles = []
+    for profile in PROFILE_LIST:
+        score = _profile_match_score(profile, normalized_query)
+        if score > 0:
+            scored_profiles.append((score, profile))
+
+    scored_profiles.sort(key=lambda item: (-item[0], item[1].business_type))
+    return business_type_catalog(tuple(profile for _score, profile in scored_profiles[:limit]))
 
 
 def get_business_profile(business_type: str) -> BusinessProfile:
@@ -533,4 +554,28 @@ def get_business_profile(business_type: str) -> BusinessProfile:
         normalized_aliases = {normalize_text(alias) for alias in profile.aliases}
         if normalized == profile.business_type or normalized in normalized_aliases:
             return profile
-    raise UnsupportedBusinessTypeError(business_type, supported_business_types())
+    suggestions = tuple(item["business_type"] for item in suggest_business_profiles(business_type, limit=5))
+    raise UnsupportedBusinessTypeError(business_type, supported_business_types(), suggestions)
+
+
+def _profile_match_score(profile: BusinessProfile, normalized_query: str) -> int:
+    fields = [
+        profile.business_type,
+        profile.title,
+        profile.category,
+        *profile.aliases,
+        *profile.examples,
+        *profile.competitor_keywords,
+        *profile.competitor_tag_values,
+    ]
+    normalized_fields = [normalize_text(field) for field in fields]
+
+    score = 0
+    for field in normalized_fields:
+        if normalized_query == field:
+            score = max(score, 100)
+        elif normalized_query in field:
+            score = max(score, 70)
+        elif any(len(token) >= 3 and token in field for token in normalized_query.split()):
+            score = max(score, 35)
+    return score

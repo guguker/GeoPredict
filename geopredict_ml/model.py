@@ -39,6 +39,8 @@ class GradientBoostingRegressorLite:
         self.max_thresholds = max_thresholds
         self.initial_prediction = 0.5
         self.stumps: list[DecisionStump] = []
+        self.business_type: str | None = None
+        self.profile_title: str | None = None
 
     def fit(self, rows: list[dict[str, Any]], targets: list[float]) -> "GradientBoostingRegressorLite":
         if not rows:
@@ -116,4 +118,7 @@ class GradientBoostingRegressorLite:
 
 def train_reference_model(profile: Any) -> GradientBoostingRegressorLite:
     rows, targets = reference_training_rows(profile)
-    return GradientBoostingRegressorLite().fit(rows, targets)
+    model = GradientBoostingRegressorLite().fit(rows, targets)
+    model.business_type = profile.business_type
+    model.profile_title = profile.title
+    return model

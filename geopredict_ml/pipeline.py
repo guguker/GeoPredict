@@ -4,12 +4,13 @@ import math
 from pathlib import Path
 from typing import Any
 
-from .business import get_business_profile
+from .business import BusinessProfile, get_business_profile
 from .explain import build_explanation
 from .features import compute_cell_features, normalize_geojson_pois, saturating_count
 from .geo import clamp
 from .grid import GridCell, polygon_to_grid_cells, validate_polygon_geometry
 from .model import GradientBoostingRegressorLite, train_reference_model
+from .model_registry import load_explicit_model, load_model_for_profile, model_artifact_path
 
 
 def analyze_request(
@@ -34,7 +35,7 @@ def analyze_request(
     resolved_data_sources = data_sources if data_sources is not None else (["osm"] if pois_geojson else [])
     resolved_data_warnings = data_warnings or []
     feature_rows = [compute_cell_features(cell, pois, profile) for cell in cells]
-    model = _load_or_train_model(profile, model_path)
+    model, model_source, artifact_path = _load_or_train_model(profile, model_path)
     model_predictions = model.predict(feature_rows)
     candidate_scores = [_candidate_score(row, score) for row, score in zip(feature_rows, model_predictions)]
     ranked_predictions = _rank_candidates(cells, feature_rows, candidate_scores)
@@ -88,6 +89,8 @@ def analyze_request(
             "model_active": True,
             "model_type": model.model_type,
             "model_version": model.model_version,
+            "model_source": model_source,
+            "model_artifact_path": artifact_path,
             "target_type": "proxy_location_success",
             "grid_backend": grid_backend,
             "top_candidates": top_candidates,
@@ -97,10 +100,18 @@ def analyze_request(
     }
 
 
-def _load_or_train_model(profile: Any, model_path: str | Path | None) -> GradientBoostingRegressorLite:
+def _load_or_train_model(
+    profile: BusinessProfile,
+    model_path: str | Path | None,
+) -> tuple[GradientBoostingRegressorLite, str, str | None]:
     if model_path and Path(model_path).exists():
-        return GradientBoostingRegressorLite.load(model_path)
-    return train_reference_model(profile)
+        return load_explicit_model(model_path, profile), "explicit_artifact", str(model_path)
+
+    registered_model = load_model_for_profile(profile)
+    if registered_model:
+        return registered_model, "registered_artifact", str(model_artifact_path(profile))
+
+    return train_reference_model(profile), "reference_in_memory", None
 
 
 def _data_status(data_sources: list[str], data_warnings: list[str]) -> str:

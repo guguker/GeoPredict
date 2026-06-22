@@ -64,9 +64,10 @@
 
 ```text
 GET /business-types
+GET /business-types?query=кофе
 ```
 
-Если пользователь передаст неподдержанный тип, API вернет `422` с кодом `unsupported_business_type` и списком допустимых `supported_business_types`.
+Если пользователь введет свободный текст, фронт может сначала запросить `GET /business-types?query=...` и показать подсказки. Если в `/analyze` все равно придет неподдержанный тип, API вернет `422` с кодом `unsupported_business_type`, списком допустимых `supported_business_types` и массивом `suggestions`.
 
 ## Быстрый локальный прогон без сети
 
@@ -81,6 +82,18 @@ python -m scripts.analyze_polygon \
   --model models/geopredict_pvz_v1.pkl
 ```
 
+## Модельные артефакты
+
+Для каждого из 20 бизнес-профилей есть свой `.pkl` в `models/`. API автоматически выбирает артефакт по каноническому `business_type`; если файла нет, временно обучает reference-модель в памяти.
+
+Перегенерировать весь registry:
+
+```bash
+python -m scripts.train_all_models --models-dir models
+```
+
+Список артефактов и бизнес-типов хранится в `models/manifest.json`. Для обратной совместимости ПВЗ-модель остается в `models/geopredict_pvz_v1.pkl`.
+
 ## Структура проекта
 
 ```text
@@ -89,7 +102,7 @@ geopredict_ml/    ML-пайплайн, признаки, бизнес-профи
 scripts/          CLI-команды для сбора OSM, обучения, анализа и сборки датасета
 data/sample/      Пример запроса и локальные sample POI для запуска без сети
 data/processed/   Примеры рассчитанных признаков и GeoJSON-результата
-models/           Сохраненный артефакт модели
+models/           Сохраненные артефакты моделей и manifest
 tests/            Контрактные, feature- и model-тесты
 docs/             Дополнительная API-документация
 ```
