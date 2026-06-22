@@ -46,10 +46,14 @@ RESPONSE_EXAMPLE = {
             "properties": {
                 "h3_id": "891f1d489ffffff",
                 "rank": 1,
+                "top_percentile": 0.01,
                 "suitability": 0.742,
                 "success_probability": 0.742,
-                "recommendation": "promising",
-                "recommendation_label": "Перспективная зона",
+                "model_score": 0.812,
+                "selection_score": 0.742,
+                "data_confidence": 0.781,
+                "recommendation": "high_priority",
+                "recommendation_label": "Приоритетно рассмотреть",
                 "competition": 3,
                 "norm_competition": 0.428,
                 "competition_penalty": 0.0,
@@ -76,6 +80,9 @@ RESPONSE_EXAMPLE = {
         "avg_suitability": 0.654,
         "business_type": "pickup_point",
         "data_sources": ["osm"],
+        "data_status": "live",
+        "data_warnings": [],
+        "poi_count": 1284,
         "model_active": True,
         "model_type": "GradientBoostingRegressorLite",
         "model_version": "geo-boost-lite-v1",
@@ -86,7 +93,9 @@ RESPONSE_EXAMPLE = {
                 "h3_id": "891f1d489ffffff",
                 "rank": 1,
                 "suitability": 0.742,
-                "recommendation": "promising",
+                "model_score": 0.812,
+                "data_confidence": 0.781,
+                "recommendation": "high_priority",
                 "center": {"lon": 37.6173, "lat": 55.7558},
             }
         ],
@@ -96,6 +105,7 @@ RESPONSE_EXAMPLE = {
             "manual_review": 14,
             "low_priority": 3,
         },
+        "selection_policy": "strict_v2_rank_confidence_saturation",
     },
 }
 
@@ -112,6 +122,28 @@ def get_cors_origins() -> list[str]:
     if not raw_origins:
         return list(DEFAULT_CORS_ORIGINS)
     return [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
+
+
+def resolve_poi_source(payload: dict, fetcher=fetch_overpass_geojson) -> tuple[dict | None, list[str], list[str]]:
+    if not payload.get("use_live_osm", True):
+        return None, [], []
+
+    try:
+        return fetcher(payload["geometry"]), ["osm"], []
+    except Exception as exc:
+        warning = (
+            "Live OSM/Overpass data is unavailable; "
+            f"returned fallback scoring without live POI data ({_format_dependency_error(exc)})."
+        )
+        return None, ["osm_unavailable"], [warning]
+
+
+def _format_dependency_error(exc: Exception) -> str:
+    status = getattr(exc, "code", None)
+    reason = getattr(exc, "reason", None)
+    if status and reason:
+        return f"HTTP {status}: {reason}"
+    return str(exc) or exc.__class__.__name__
 
 
 if FastAPI:
@@ -180,8 +212,13 @@ if FastAPI:
     def analyze_endpoint(payload: AnalyzeRequest = Body(...)) -> dict:
         try:
             payload_dict = payload.model_dump() if hasattr(payload, "model_dump") else payload.dict()
-            pois = fetch_overpass_geojson(payload_dict["geometry"]) if payload_dict.get("use_live_osm", True) else None
-            return analyze_request(payload_dict, pois_geojson=pois)
+            pois, data_sources, data_warnings = resolve_poi_source(payload_dict)
+            return analyze_request(
+                payload_dict,
+                pois_geojson=pois,
+                data_sources=data_sources,
+                data_warnings=data_warnings,
+            )
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         except Exception as exc:

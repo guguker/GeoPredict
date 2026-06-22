@@ -132,7 +132,9 @@ uvicorn api.analyze:app --reload
 
 Для локальной разработки API разрешает CORS-запросы с `http://localhost:3000`, `http://127.0.0.1:3000`, `http://localhost:5173` и `http://127.0.0.1:5173`. Если фронт живет на другом адресе, передайте список через `GEOPREDICT_CORS_ORIGINS`, например `GEOPREDICT_CORS_ORIGINS=http://localhost:8080`.
 
-В ответе каждая ячейка содержит `rank`, `suitability`, `success_probability`, `recommendation`, `recommendation_label`, счетчики POI и объяснения. В `metadata.top_candidates` API дополнительно возвращает до 10 лучших зон для открытия ПВЗ.
+В ответе каждая ячейка содержит `rank`, `suitability`, `success_probability`, `model_score`, `selection_score`, `data_confidence`, `recommendation`, `recommendation_label`, счетчики POI и объяснения. `model_score` — сырой ML-score, а `suitability`/`selection_score` — более строгая v2-оценка для карты и топа: она учитывает силу локальных сигналов, уверенность данных, насыщение зоны и относительный ранг внутри выбранного полигона.
+
+Если Overpass временно отвечает ошибкой вроде `429 Too Many Requests`, API больше не падает `502`. Он возвращает GeoJSON с `metadata.data_status = "degraded"`, `data_sources = ["osm_unavailable"]` и предупреждением в `metadata.data_warnings`.
 
 Короткий пример свойств одной ячейки:
 
@@ -140,10 +142,14 @@ uvicorn api.analyze:app --reload
 {
   "h3_id": "891f1d489ffffff",
   "rank": 1,
+  "top_percentile": 0.01,
   "suitability": 0.742,
   "success_probability": 0.742,
-  "recommendation": "promising",
-  "recommendation_label": "Перспективная зона",
+  "model_score": 0.812,
+  "selection_score": 0.742,
+  "data_confidence": 0.781,
+  "recommendation": "high_priority",
+  "recommendation_label": "Приоритетно рассмотреть",
   "competition": 3,
   "traffic_potential": 0.691,
   "density_score": 0.638,
@@ -168,10 +174,15 @@ uvicorn api.analyze:app --reload
       "h3_id": "891f1d489ffffff",
       "rank": 1,
       "suitability": 0.742,
-      "recommendation": "promising",
+      "model_score": 0.812,
+      "data_confidence": 0.781,
+      "recommendation": "high_priority",
       "center": {"lon": 37.6173, "lat": 55.7558}
     }
   ],
+  "data_status": "live",
+  "poi_count": 1284,
+  "selection_policy": "strict_v2_rank_confidence_saturation",
   "recommendation_counts": {
     "high_priority": 4,
     "promising": 21,

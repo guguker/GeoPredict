@@ -1,6 +1,6 @@
 import unittest
 
-from geopredict_ml.pipeline import analyze_request
+from geopredict_ml.pipeline import _recommendation_for_candidate, analyze_request
 
 
 SAMPLE_REQUEST = {
@@ -59,6 +59,9 @@ class AnalyzeContractTest(unittest.TestCase):
         self.assertIn("model_version", result["metadata"])
         self.assertIn("top_candidates", result["metadata"])
         self.assertIn("recommendation_counts", result["metadata"])
+        self.assertIn("selection_policy", result["metadata"])
+        self.assertEqual(result["metadata"]["data_status"], "live")
+        self.assertEqual(result["metadata"]["poi_count"], len(SAMPLE_POIS["features"]))
         self.assertGreaterEqual(len(result["metadata"]["top_candidates"]), 1)
 
         first = result["features"][0]
@@ -69,6 +72,9 @@ class AnalyzeContractTest(unittest.TestCase):
         self.assertIn("rank", props)
         self.assertIn("suitability", props)
         self.assertIn("success_probability", props)
+        self.assertIn("model_score", props)
+        self.assertIn("selection_score", props)
+        self.assertIn("data_confidence", props)
         self.assertIn("recommendation", props)
         self.assertIn("recommendation_label", props)
         self.assertIn("traffic_potential", props)
@@ -85,6 +91,31 @@ class AnalyzeContractTest(unittest.TestCase):
         self.assertEqual(top["rank"], 1)
         self.assertEqual(top["h3_id"], ranked_first["properties"]["h3_id"])
         self.assertEqual(top["suitability"], ranked_first["properties"]["suitability"])
+
+    def test_fallback_without_pois_is_not_marked_as_priority(self):
+        result = analyze_request(
+            SAMPLE_REQUEST,
+            pois_geojson=None,
+            data_sources=["osm_unavailable"],
+            data_warnings=["OSM unavailable"],
+        )
+
+        self.assertEqual(result["metadata"]["data_sources"], ["osm_unavailable"])
+        self.assertEqual(result["metadata"]["data_status"], "degraded")
+        self.assertEqual(result["metadata"]["data_warnings"], ["OSM unavailable"])
+        self.assertEqual(result["metadata"]["recommendation_counts"]["high_priority"], 0)
+        self.assertTrue(
+            all(feature["properties"]["recommendation"] != "high_priority" for feature in result["features"])
+        )
+
+    def test_high_priority_requires_top_rank_not_only_high_score(self):
+        candidate = {"selection_score": 0.9, "data_confidence": 0.9}
+
+        top = _recommendation_for_candidate(candidate, rank=1, total_cells=1_000)
+        late = _recommendation_for_candidate(candidate, rank=50, total_cells=1_000)
+
+        self.assertEqual(top["code"], "high_priority")
+        self.assertNotEqual(late["code"], "high_priority")
 
     def test_rejects_invalid_geometry(self):
         bad_request = {"geometry": {"type": "Point", "coordinates": [37.6, 55.7]}, "business_type": "pickup_point"}

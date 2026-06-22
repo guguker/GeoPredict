@@ -2,7 +2,7 @@ import os
 import unittest
 from unittest.mock import patch
 
-from api.analyze import DEFAULT_CORS_ORIGINS, get_cors_origins
+from api.analyze import DEFAULT_CORS_ORIGINS, get_cors_origins, resolve_poi_source
 
 
 class ApiConfigTest(unittest.TestCase):
@@ -21,6 +21,28 @@ class ApiConfigTest(unittest.TestCase):
             origins = get_cors_origins()
 
         self.assertEqual(origins, ["http://localhost:8080", "https://example.com"])
+
+    def test_resolve_poi_source_falls_back_when_live_osm_fails(self):
+        payload = {"geometry": {"type": "Polygon", "coordinates": []}, "use_live_osm": True}
+
+        def failing_fetcher(_geometry):
+            raise RuntimeError("HTTP Error 429: Too Many Requests")
+
+        pois, data_sources, data_warnings = resolve_poi_source(payload, fetcher=failing_fetcher)
+
+        self.assertIsNone(pois)
+        self.assertEqual(data_sources, ["osm_unavailable"])
+        self.assertEqual(len(data_warnings), 1)
+        self.assertIn("fallback scoring", data_warnings[0])
+
+    def test_resolve_poi_source_skips_fetcher_when_live_osm_disabled(self):
+        payload = {"geometry": {"type": "Polygon", "coordinates": []}, "use_live_osm": False}
+
+        pois, data_sources, data_warnings = resolve_poi_source(payload, fetcher=lambda _geometry: self.fail())
+
+        self.assertIsNone(pois)
+        self.assertEqual(data_sources, [])
+        self.assertEqual(data_warnings, [])
 
 
 if __name__ == "__main__":
