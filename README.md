@@ -78,6 +78,30 @@ python -m scripts.build_dataset \
 
 CSV будет содержать одну строку на H3-ячейку: признаки, counts по POI и `target_success`.
 
+## Оценка модели
+
+Для текущего MVP метрики считаются по колонке `target_success`. Это proxy-таргет, поэтому такие метрики показывают, насколько модель воспроизводит заданную геомаркетинговую формулу успешности. Когда появятся исторические данные по фактическим открытиям ПВЗ, можно добавить колонку вроде `actual_success` и передать ее через `--target-column`.
+
+Оценить сохраненный артефакт модели на размеченном CSV:
+
+```bash
+python -m scripts.evaluate_model \
+  --dataset data/processed/pvz_features.csv \
+  --model models/geopredict_pvz_v1.pkl
+```
+
+Сделать holdout-проверку: обучить свежую модель на train-части CSV и посчитать метрики на test-части:
+
+```bash
+python -m scripts.evaluate_model \
+  --dataset data/processed/pvz_features.csv \
+  --fit-holdout \
+  --test-size 0.25 \
+  --seed 42
+```
+
+В отчете выводятся `mae`, `mse`, `rmse`, `median_absolute_error`, `max_error`, `bias`, `mape`, `r2`, а также baseline по среднему значению target.
+
 ## Сбор данных из OSM
 
 ```bash
