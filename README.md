@@ -130,6 +130,8 @@ uvicorn api.analyze:app --reload
 
 `POST /analyze` принимает тот же JSON. По умолчанию API пробует получить POI из OSM/Overpass.
 
+Для локальной разработки API разрешает CORS-запросы с `http://localhost:3000`, `http://127.0.0.1:3000`, `http://localhost:5173` и `http://127.0.0.1:5173`. Если фронт живет на другом адресе, передайте список через `GEOPREDICT_CORS_ORIGINS`, например `GEOPREDICT_CORS_ORIGINS=http://localhost:8080`.
+
 В ответе каждая ячейка содержит `rank`, `suitability`, `success_probability`, `recommendation`, `recommendation_label`, счетчики POI и объяснения. В `metadata.top_candidates` API дополнительно возвращает до 10 лучших зон для открытия ПВЗ.
 
 Короткий пример свойств одной ячейки:

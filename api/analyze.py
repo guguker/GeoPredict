@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+import os
+
 from geopredict_ml.osm import fetch_overpass_geojson
 from geopredict_ml.pipeline import analyze_request
 
 
 try:
     from fastapi import Body, FastAPI, HTTPException
+    from fastapi.middleware.cors import CORSMiddleware
     from pydantic import BaseModel, Field
 except Exception:  # pragma: no cover - optional web dependency
     Body = None
+    CORSMiddleware = None
     BaseModel = object
     FastAPI = None
     Field = None
@@ -95,6 +99,20 @@ RESPONSE_EXAMPLE = {
     },
 }
 
+DEFAULT_CORS_ORIGINS = (
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+)
+
+
+def get_cors_origins() -> list[str]:
+    raw_origins = os.getenv("GEOPREDICT_CORS_ORIGINS")
+    if not raw_origins:
+        return list(DEFAULT_CORS_ORIGINS)
+    return [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
+
 
 if FastAPI:
     class AnalyzeRequest(BaseModel):
@@ -125,6 +143,13 @@ if FastAPI:
         docs_url="/docs",
         redoc_url="/redoc",
         openapi_url="/openapi.json",
+    )
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=get_cors_origins(),
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
 
     @app.get("/health", tags=["system"], summary="Health check")
