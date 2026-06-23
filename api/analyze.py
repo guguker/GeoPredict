@@ -9,6 +9,7 @@ from geopredict_ml.business import (
     suggest_business_profiles,
     supported_business_types,
 )
+from geopredict_ml.jobs import InMemoryAnalysisJobStore
 from geopredict_ml.osm import fetch_overpass_geojson
 from geopredict_ml.pipeline import analyze_request
 
@@ -80,6 +81,17 @@ RESPONSE_EXAMPLE = {
                     "education": 2,
                 },
                 "explanation": ["Перспективная локация", "Конкуренция есть, но зона не выглядит перенасыщенной"],
+                "explanation_factors": [
+                    {
+                        "feature": "residential_score",
+                        "label": "Жилая база",
+                        "value": 0.72,
+                        "weight": 0.24,
+                        "impact": 0.173,
+                        "direction": "positive",
+                        "message": "Поддерживает оценку",
+                    }
+                ],
             },
         }
     ],
@@ -92,6 +104,15 @@ RESPONSE_EXAMPLE = {
         "business_category": "marketplace_logistics",
         "business_query": None,
         "is_custom_business": False,
+        "business_search": {
+            "mode": "fixed_profile",
+            "title": "Пункт выдачи заказов",
+            "source_query": None,
+            "osm_tag_keys": ["name", "brand", "operator", "shop", "amenity"],
+            "osm_keywords": ["ozon", "wildberries", "яндекс маркет"],
+            "osm_tag_values": ["outpost", "parcel_locker"],
+            "message": "Используется фиксированный бизнес-профиль из каталога.",
+        },
         "data_sources": ["osm"],
         "data_status": "live",
         "data_warnings": [],
@@ -150,6 +171,12 @@ BUSINESS_TYPES_EXAMPLE = {
         "category": "custom_osm_search",
         "source_query": "кофе",
         "is_custom": True,
+        "search_summary": {
+            "mode": "custom_osm",
+            "osm_keywords": ["кофе"],
+            "osm_tag_values": ["кофе"],
+            "message": "Пользовательский тип не найден в фиксированном каталоге; ищем похожие OSM-точки.",
+        },
     },
 }
 
@@ -159,6 +186,7 @@ DEFAULT_CORS_ORIGINS = (
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 )
+JOB_STORE = InMemoryAnalysisJobStore()
 
 
 def get_cors_origins() -> list[str]:
@@ -173,6 +201,9 @@ def resolve_poi_source(payload: dict, fetcher=fetch_overpass_geojson) -> tuple[d
         return None, [], []
 
     try:
+        if fetcher is fetch_overpass_geojson:
+            cache_dir = os.getenv("GEOPREDICT_OSM_CACHE_DIR")
+            return fetcher(payload["geometry"], cache_dir=cache_dir), ["osm"], []
         return fetcher(payload["geometry"]), ["osm"], []
     except Exception as exc:
         warning = (
@@ -188,6 +219,16 @@ def _format_dependency_error(exc: Exception) -> str:
     if status and reason:
         return f"HTTP {status}: {reason}"
     return str(exc) or exc.__class__.__name__
+
+
+def run_analysis_payload(payload_dict: dict) -> dict:
+    pois, data_sources, data_warnings = resolve_poi_source(payload_dict)
+    return analyze_request(
+        payload_dict,
+        pois_geojson=pois,
+        data_sources=data_sources,
+        data_warnings=data_warnings,
+    )
 
 
 if FastAPI:
@@ -287,13 +328,7 @@ if FastAPI:
     def analyze_endpoint(payload: AnalyzeRequest = Body(...)) -> dict:
         try:
             payload_dict = payload.model_dump() if hasattr(payload, "model_dump") else payload.dict()
-            pois, data_sources, data_warnings = resolve_poi_source(payload_dict)
-            return analyze_request(
-                payload_dict,
-                pois_geojson=pois,
-                data_sources=data_sources,
-                data_warnings=data_warnings,
-            )
+            return run_analysis_payload(payload_dict)
         except UnsupportedBusinessTypeError as exc:
             raise HTTPException(
                 status_code=422,
@@ -308,6 +343,28 @@ if FastAPI:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         except Exception as exc:
             raise HTTPException(status_code=502, detail=f"Analysis dependency failed: {exc}") from exc
+
+    @app.post(
+        "/analyze-jobs",
+        tags=["analysis"],
+        summary="Start asynchronous territory analysis",
+        response_description="Analysis job handle.",
+    )
+    def create_analysis_job(payload: AnalyzeRequest = Body(...)) -> dict:
+        payload_dict = payload.model_dump() if hasattr(payload, "model_dump") else payload.dict()
+        return JOB_STORE.submit(payload_dict, run_analysis_payload)
+
+    @app.get(
+        "/analyze-jobs/{job_id}",
+        tags=["analysis"],
+        summary="Get asynchronous territory analysis job",
+        response_description="Analysis job state and result when complete.",
+    )
+    def get_analysis_job(job_id: str) -> dict:
+        try:
+            return JOB_STORE.get(job_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail={"code": "job_not_found", "job_id": job_id}) from exc
 else:
     app = None
 

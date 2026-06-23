@@ -87,6 +87,7 @@ def _artifact_metadata(
     path: Path,
     artifact_version: str,
 ) -> dict[str, Any]:
+    metrics = _training_metrics(profile, model)
     return {
         "business_type": profile.business_type,
         "title": profile.title,
@@ -95,6 +96,23 @@ def _artifact_metadata(
         "artifact_version": artifact_version,
         "model_type": model.model_type,
         "model_version": model.model_version,
+        "target_type": "proxy_location_success",
+        "training_rows": metrics["training_rows"],
+        "training_metrics": metrics["model_metrics"],
+        "baseline_metrics": metrics["baseline_metrics"],
+    }
+
+
+def _training_metrics(profile: BusinessProfile, model: GradientBoostingRegressorLite) -> dict[str, Any]:
+    from .evaluation import LabeledDataset, evaluate_mean_baseline, evaluate_model
+    from .target import reference_training_rows
+
+    rows, targets = reference_training_rows(profile)
+    dataset = LabeledDataset(rows=rows, targets=targets, target_column="target_success")
+    return {
+        "training_rows": len(rows),
+        "model_metrics": evaluate_model(model, dataset),
+        "baseline_metrics": evaluate_mean_baseline(dataset),
     }
 
 

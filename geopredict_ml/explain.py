@@ -4,6 +4,19 @@ from typing import Any
 
 from .business import BusinessProfile
 
+FACTOR_LABELS = {
+    "traffic_potential": "Поток и доступность",
+    "density_score": "Плотность POI",
+    "residential_score": "Жилая база",
+    "transport_score": "Транспорт",
+    "retail_anchor_score": "Торговые якоря",
+    "office_score": "Офисы",
+    "education_score": "Образование рядом",
+    "market_validation": "Подтвержденный спрос",
+    "competition_penalty": "Перенасыщение конкурентами",
+    "norm_competition": "Конкуренция",
+}
+
 
 def build_explanation(features: dict[str, Any], score: float, profile: BusinessProfile) -> list[str]:
     explanation: list[str] = []
@@ -42,3 +55,34 @@ def build_explanation(features: dict[str, Any], score: float, profile: BusinessP
         explanation.append("Мало открытых POI-данных вокруг точки")
 
     return explanation[:6]
+
+
+def build_explanation_factors(features: dict[str, Any], profile: BusinessProfile) -> list[dict[str, Any]]:
+    factors: list[dict[str, Any]] = []
+    for feature_name, weight in profile.target_weights.items():
+        value = float(features.get(feature_name, 0.0))
+        if weight < 0:
+            impact = -value * abs(weight)
+            direction = "negative" if value >= 0.20 else "neutral"
+            message = "Снижает оценку из-за насыщения или прямой конкуренции"
+        else:
+            impact = value * weight
+            direction = "positive" if value >= 0.35 else "negative" if value < 0.12 else "neutral"
+            message = "Поддерживает оценку" if direction == "positive" else "Слабый сигнал для этой зоны"
+
+        if direction == "neutral":
+            continue
+        factors.append(
+            {
+                "feature": feature_name,
+                "label": FACTOR_LABELS.get(feature_name, feature_name),
+                "value": round(value, 3),
+                "weight": round(weight, 3),
+                "impact": round(impact, 3),
+                "direction": direction,
+                "message": message,
+            }
+        )
+
+    factors.sort(key=lambda item: abs(float(item["impact"])), reverse=True)
+    return factors[:6]

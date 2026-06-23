@@ -100,9 +100,25 @@ GET /business-types?query=кофе
 Ответ `POST /analyze` содержит:
 
 - `features[]` — GeoJSON-ячейки с v2-оценкой `suitability`, сырым `model_score`, строгим `selection_score`, уверенностью данных `data_confidence`, рангом `rank`, кодом рекомендации `recommendation`, объяснениями и счетчиками POI.
+- `features[].properties.explanation_factors` — структурированные факторы плюс/минус для интерфейса объяснений.
+- `metadata.business_search` — как был выбран профиль: фиксированный каталог или `custom_osm`, какие OSM-ключи/слова используются.
 - `metadata.top_candidates` — до 10 лучших ячеек по оценке модели для быстрого вывода списка приоритетных зон.
 - `metadata.recommendation_counts` — количество ячеек в группах `high_priority`, `promising`, `manual_review`, `low_priority`.
 - `metadata.data_status` — `live`, `degraded` или `empty`. При ошибках Overpass, включая `429 Too Many Requests`, API возвращает `degraded` вместо HTTP 502.
+
+### `POST /analyze-jobs`
+
+Запускает тот же анализ в job-режиме и сразу возвращает `job_id` со статусом `queued`/`running`. Это нужно для больших полигонов и live OSM-запросов.
+
+### `GET /analyze-jobs/{job_id}`
+
+Возвращает состояние job: `queued`, `running`, `done` или `failed`. Когда job завершена, поле `result` содержит тот же GeoJSON `FeatureCollection`, что и `POST /analyze`.
+
+Для API-кэша Overpass можно задать переменную окружения:
+
+```bash
+GEOPREDICT_OSM_CACHE_DIR=data/cache/osm
+```
 
 Пример свойств одной ячейки:
 
@@ -129,6 +145,17 @@ GET /business-types?query=кофе
   "explanation": [
     "Перспективная локация",
     "Конкуренция есть, но зона не выглядит перенасыщенной"
+  ],
+  "explanation_factors": [
+    {
+      "feature": "residential_score",
+      "label": "Жилая база",
+      "value": 0.72,
+      "weight": 0.24,
+      "impact": 0.173,
+      "direction": "positive",
+      "message": "Поддерживает оценку"
+    }
   ]
 }
 ```

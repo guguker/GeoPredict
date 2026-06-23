@@ -1,13 +1,13 @@
 # GeoPredict ML
 
-Первая ML-версия для оценки перспективности открытия ПВЗ по пользовательскому полигону.
+ML-сервис для оценки перспективности открытия локального бизнеса по пользовательскому полигону.
 
 ## Что делает пайплайн
 
 1. Принимает запрос с `geometry`, `business_type` и `h3_resolution`.
 2. Делит территорию на H3-ячейки. Если библиотека `h3` не установлена, использует совместимую fallback-сетку для локальной разработки.
 3. Берет POI из OpenStreetMap/Overpass или из локального GeoJSON.
-4. Считает признаки для ПВЗ: конкуренты, транспорт, жилое окружение, офисы, торговые якоря, плотность POI.
+4. Считает признаки для выбранного бизнес-профиля: конкуренты, транспорт, жилое окружение, офисы, торговые якоря, плотность POI.
 5. Обучает или загружает `GradientBoostingRegressorLite`.
 6. Возвращает GeoJSON `FeatureCollection` для карты с ранжированием ячеек и списком лучших кандидатов.
 
@@ -78,6 +78,8 @@ GET /business-types?query=кофе
 ```
 
 Тогда неподдержанный тип вернет `422` с кодом `unsupported_business_type`, списком допустимых `supported_business_types` и массивом `suggestions`.
+
+Фиксированный каталог лежит в `business_profiles/default.yml`. Формат `.yml` сделан JSON-compatible, поэтому профиль можно править без изменения Python-кода и без новой зависимости на YAML-парсер.
 
 ## Быстрый локальный прогон без сети
 
@@ -158,12 +160,42 @@ python -m scripts.evaluate_model \
 
 В отчете выводятся `mae`, `mse`, `rmse`, `median_absolute_error`, `max_error`, `bias`, `mape`, `r2`, а также baseline по среднему значению target.
 
+Для карты полезны ranking-метрики: насколько хорошие точки попадают в верх выдачи. Если CSV содержит колонку score, например `selection_score`, можно посчитать `precision_at_k`, `recall_at_k`, `ndcg_at_k` и `lift_at_k`:
+
+```bash
+python -m scripts.evaluate_ranking \
+  --dataset data/processed/pvz_features.csv \
+  --label-column target_success \
+  --score-column selection_score \
+  --k 10
+```
+
 ## Сбор данных из OSM
 
 ```bash
 python -m scripts.collect_osm \
   --request data/sample/request_pvz.json \
   --output data/raw/osm_pois.geojson
+```
+
+Для исторического снапшота Overpass можно передать дату:
+
+```bash
+python -m scripts.collect_osm \
+  --request data/sample/request_pvz.json \
+  --output data/raw/osm_pois_2024.geojson \
+  --snapshot-date 2024-01-01T00:00:00Z \
+  --cache-dir data/cache/osm
+```
+
+Сравнить два OSM-снапшота и найти появившиеся/исчезнувшие точки конкретного бизнеса:
+
+```bash
+python -m scripts.osm_snapshot_backtest \
+  --before data/raw/osm_pois_2024.geojson \
+  --after data/raw/osm_pois_2025.geojson \
+  --business-type coffee_shop \
+  --output data/processed/coffee_shop_snapshot_diff.json
 ```
 
 Затем:
@@ -188,7 +220,16 @@ uvicorn api.analyze:app --reload
 
 Для локальной разработки API разрешает CORS-запросы с `http://localhost:3000`, `http://127.0.0.1:3000`, `http://localhost:5173` и `http://127.0.0.1:5173`. Если фронт живет на другом адресе, передайте список через `GEOPREDICT_CORS_ORIGINS`, например `GEOPREDICT_CORS_ORIGINS=http://localhost:8080`.
 
-В ответе каждая ячейка содержит `rank`, `suitability`, `success_probability`, `model_score`, `selection_score`, `data_confidence`, `recommendation`, `recommendation_label`, счетчики POI и объяснения. `model_score` — сырой ML-score, а `suitability`/`selection_score` — более строгая v2-оценка для карты и топа: она учитывает силу локальных сигналов, уверенность данных, насыщение зоны и относительный ранг внутри выбранного полигона.
+Чтобы включить кэш live OSM/Overpass для API, задайте `GEOPREDICT_OSM_CACHE_DIR`, например `GEOPREDICT_OSM_CACHE_DIR=data/cache/osm`.
+
+В ответе каждая ячейка содержит `rank`, `suitability`, `success_probability`, `model_score`, `selection_score`, `data_confidence`, `recommendation`, `recommendation_label`, счетчики POI, текстовые объяснения и структурированные `explanation_factors`. `model_score` — сырой ML-score, а `suitability`/`selection_score` — более строгая v2-оценка для карты и топа: она учитывает силу локальных сигналов, уверенность данных, насыщение зоны и относительный ранг внутри выбранного полигона.
+
+Для долгих live OSM-анализов есть job-режим:
+
+```text
+POST /analyze-jobs
+GET /analyze-jobs/{job_id}
+```
 
 Если Overpass временно отвечает ошибкой вроде `429 Too Many Requests`, API больше не падает `502`. Он возвращает GeoJSON с `metadata.data_status = "degraded"`, `data_sources = ["osm_unavailable"]` и предупреждением в `metadata.data_warnings`.
 

@@ -9,7 +9,31 @@
       "artifact_path": "models/geopredict_pvz_v1.pkl",
       "artifact_version": "v1",
       "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
+      "model_version": "geo-boost-lite-v1",
+      "target_type": "proxy_location_success",
+      "training_rows": 5625,
+      "training_metrics": {
+        "count": 5625,
+        "mae": 0.05207029528888888,
+        "mse": 0.004211623698459911,
+        "rmse": 0.06489702380279015,
+        "median_absolute_error": 0.044109000000000065,
+        "max_error": 0.23421000000000003,
+        "bias": -3.733333313515885e-09,
+        "mape": 0.10088496295421173,
+        "r2": 0.8110462218470842
+      },
+      "baseline_metrics": {
+        "count": 5625,
+        "mae": 0.12073816177777777,
+        "mse": 0.022289174313580247,
+        "rmse": 0.14929559375139057,
+        "median_absolute_error": 0.10420444444444454,
+        "max_error": 0.4757955555555555,
+        "bias": -1.3401625488364112e-17,
+        "mape": 0.23477302920339552,
+        "r2": 0.0
+      }
     },
     {
       "business_type": "coffee_shop",
@@ -18,7 +42,31 @@
       "artifact_path": "models/geopredict_coffee_shop_v1.pkl",
       "artifact_version": "v1",
       "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
+      "model_version": "geo-boost-lite-v1",
+      "target_type": "proxy_location_success",
+      "training_rows": 5625,
+      "training_metrics": {
+        "count": 5625,
+        "mae": 0.04298179288888889,
+        "mse": 0.002896428827600889,
+        "rmse": 0.05381848035387927,
+        "median_absolute_error": 0.036851999999999996,
+        "max_error": 0.18133300000000002,
+        "bias": -8.000000005041011e-09,
+        "mape": 0.08743935672082073,
+        "r2": 0.8933773802190388
+      },
+      "baseline_metrics": {
+        "count": 5625,
+        "mae": 0.1340526482962963,
+        "mse": 0.02716523785995062,
+        "rmse": 0.16481880311405803,
+        "median_absolute_error": 0.11690977777777778,
+        "max_error": 0.46859022222222224,
+        "bias": 1.1496976210562732e-17,
+        "mape": 0.27417583406956686,
+        "r2": 0.0
+      }
     },
     {
       "business_type": "beer_store",
@@ -27,7 +75,31 @@
       "artifact_path": "models/geopredict_beer_store_v1.pkl",
       "artifact_version": "v1",
       "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
+      "model_version": "geo-boost-lite-v1",
+      "target_type": "proxy_location_success",
+      "training_rows": 5625,
+      "training_metrics": {
+        "count": 5625,
+        "mae": 0.04298179288888889,
+        "mse": 0.002896428827600889,
+        "rmse": 0.05381848035387927,
+        "median_absolute_error": 0.036851999999999996,
+        "max_error": 0.18133300000000002,
+        "bias": -8.000000005041011e-09,
+        "mape": 0.08743935672082073,
+        "r2": 0.8933773802190388
+      },
+      "baseline_metrics": {
+        "count": 5625,
+        "mae": 0.1340526482962963,
+        "mse": 0.02716523785995062,
+        "rmse": 0.16481880311405803,
+        "median_absolute_error": 0.11690977777777778,
+        "max_error": 0.46859022222222224,
+        "bias": 1.1496976210562732e-17,
+        "mape": 0.27417583406956686,
+        "r2": 0.0
+      }
     },
     {
       "business_type": "pharmacy",
@@ -36,7 +108,31 @@
       "artifact_path": "models/geopredict_pharmacy_v1.pkl",
       "artifact_version": "v1",
       "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
+      "model_version": "geo-boost-lite-v1",
+      "target_type": "proxy_location_success",
+      "training_rows": 5625,
+      "training_metrics": {
+        "count": 5625,
+        "mae": 0.04887479573333335,
+        "mse": 0.0037067861910698697,
+        "rmse": 0.06088338189580035,
+        "median_absolute_error": 0.04163400000000006,
+        "max_error": 0.21270200000000003,
+        "bias": 1.3155555550234708e-08,
+        "mape": 0.09579692487093032,
+        "r2": 0.8183647787353499
+      },
+      "baseline_metrics": {
+        "count": 5625,
+        "mae": 0.11554631695802471,
+        "mse": 0.020407860134510625,
+        "rmse": 0.14285608189541887,
+        "median_absolute_error": 0.09999342222222224,
+        "max_error": 0.44599342222222227,
+        "bias": -3.996802888650563e-18,
+        "mape": 0.22762875758675477,
+        "r2": 0.0
+      }
     },
     {
       "business_type": "grocery_store",
@@ -45,7 +141,31 @@
       "artifact_path": "models/geopredict_grocery_store_v1.pkl",
       "artifact_version": "v1",
       "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
+      "model_version": "geo-boost-lite-v1",
+      "target_type": "proxy_location_success",
+      "training_rows": 5625,
+      "training_metrics": {
+        "count": 5625,
+        "mae": 0.04887479573333335,
+        "mse": 0.0037067861910698697,
+        "rmse": 0.06088338189580035,
+        "median_absolute_error": 0.04163400000000006,
+        "max_error": 0.21270200000000003,
+        "bias": 1.3155555550234708e-08,
+        "mape": 0.09579692487093032,
+        "r2": 0.8183647787353499
+      },
+      "baseline_metrics": {
+        "count": 5625,
+        "mae": 0.11554631695802471,
+        "mse": 0.020407860134510625,
+        "rmse": 0.14285608189541887,
+        "median_absolute_error": 0.09999342222222224,
+        "max_error": 0.44599342222222227,
+        "bias": -3.996802888650563e-18,
+        "mape": 0.22762875758675477,
+        "r2": 0.0
+      }
     },
     {
       "business_type": "bakery",
@@ -54,7 +174,31 @@
       "artifact_path": "models/geopredict_bakery_v1.pkl",
       "artifact_version": "v1",
       "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
+      "model_version": "geo-boost-lite-v1",
+      "target_type": "proxy_location_success",
+      "training_rows": 5625,
+      "training_metrics": {
+        "count": 5625,
+        "mae": 0.04298179288888889,
+        "mse": 0.002896428827600889,
+        "rmse": 0.05381848035387927,
+        "median_absolute_error": 0.036851999999999996,
+        "max_error": 0.18133300000000002,
+        "bias": -8.000000005041011e-09,
+        "mape": 0.08743935672082073,
+        "r2": 0.8933773802190388
+      },
+      "baseline_metrics": {
+        "count": 5625,
+        "mae": 0.1340526482962963,
+        "mse": 0.02716523785995062,
+        "rmse": 0.16481880311405803,
+        "median_absolute_error": 0.11690977777777778,
+        "max_error": 0.46859022222222224,
+        "bias": 1.1496976210562732e-17,
+        "mape": 0.27417583406956686,
+        "r2": 0.0
+      }
     },
     {
       "business_type": "fast_food",
@@ -63,7 +207,31 @@
       "artifact_path": "models/geopredict_fast_food_v1.pkl",
       "artifact_version": "v1",
       "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
+      "model_version": "geo-boost-lite-v1",
+      "target_type": "proxy_location_success",
+      "training_rows": 5625,
+      "training_metrics": {
+        "count": 5625,
+        "mae": 0.04298179288888889,
+        "mse": 0.002896428827600889,
+        "rmse": 0.05381848035387927,
+        "median_absolute_error": 0.036851999999999996,
+        "max_error": 0.18133300000000002,
+        "bias": -8.000000005041011e-09,
+        "mape": 0.08743935672082073,
+        "r2": 0.8933773802190388
+      },
+      "baseline_metrics": {
+        "count": 5625,
+        "mae": 0.1340526482962963,
+        "mse": 0.02716523785995062,
+        "rmse": 0.16481880311405803,
+        "median_absolute_error": 0.11690977777777778,
+        "max_error": 0.46859022222222224,
+        "bias": 1.1496976210562732e-17,
+        "mape": 0.27417583406956686,
+        "r2": 0.0
+      }
     },
     {
       "business_type": "restaurant",
@@ -72,7 +240,31 @@
       "artifact_path": "models/geopredict_restaurant_v1.pkl",
       "artifact_version": "v1",
       "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
+      "model_version": "geo-boost-lite-v1",
+      "target_type": "proxy_location_success",
+      "training_rows": 5625,
+      "training_metrics": {
+        "count": 5625,
+        "mae": 0.04298179288888889,
+        "mse": 0.002896428827600889,
+        "rmse": 0.05381848035387927,
+        "median_absolute_error": 0.036851999999999996,
+        "max_error": 0.18133300000000002,
+        "bias": -8.000000005041011e-09,
+        "mape": 0.08743935672082073,
+        "r2": 0.8933773802190388
+      },
+      "baseline_metrics": {
+        "count": 5625,
+        "mae": 0.1340526482962963,
+        "mse": 0.02716523785995062,
+        "rmse": 0.16481880311405803,
+        "median_absolute_error": 0.11690977777777778,
+        "max_error": 0.46859022222222224,
+        "bias": 1.1496976210562732e-17,
+        "mape": 0.27417583406956686,
+        "r2": 0.0
+      }
     },
     {
       "business_type": "beauty_salon",
@@ -81,7 +273,31 @@
       "artifact_path": "models/geopredict_beauty_salon_v1.pkl",
       "artifact_version": "v1",
       "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
+      "model_version": "geo-boost-lite-v1",
+      "target_type": "proxy_location_success",
+      "training_rows": 5625,
+      "training_metrics": {
+        "count": 5625,
+        "mae": 0.048540966222222225,
+        "mse": 0.0036752963552112,
+        "rmse": 0.06062422251222031,
+        "median_absolute_error": 0.04116500000000012,
+        "max_error": 0.22,
+        "bias": 9.777777779179035e-09,
+        "mape": 0.0951350402254562,
+        "r2": 0.8213469724398768
+      },
+      "baseline_metrics": {
+        "count": 5625,
+        "mae": 0.11607846046024693,
+        "mse": 0.020572259006214323,
+        "rmse": 0.14343032805586942,
+        "median_absolute_error": 0.10034008888888879,
+        "max_error": 0.45165991111111115,
+        "bias": 4.2079919795570376e-17,
+        "mape": 0.22837776983053745,
+        "r2": 0.0
+      }
     },
     {
       "business_type": "barbershop",
@@ -90,7 +306,31 @@
       "artifact_path": "models/geopredict_barbershop_v1.pkl",
       "artifact_version": "v1",
       "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
+      "model_version": "geo-boost-lite-v1",
+      "target_type": "proxy_location_success",
+      "training_rows": 5625,
+      "training_metrics": {
+        "count": 5625,
+        "mae": 0.048540966222222225,
+        "mse": 0.0036752963552112,
+        "rmse": 0.06062422251222031,
+        "median_absolute_error": 0.04116500000000012,
+        "max_error": 0.22,
+        "bias": 9.777777779179035e-09,
+        "mape": 0.0951350402254562,
+        "r2": 0.8213469724398768
+      },
+      "baseline_metrics": {
+        "count": 5625,
+        "mae": 0.11607846046024693,
+        "mse": 0.020572259006214323,
+        "rmse": 0.14343032805586942,
+        "median_absolute_error": 0.10034008888888879,
+        "max_error": 0.45165991111111115,
+        "bias": 4.2079919795570376e-17,
+        "mape": 0.22837776983053745,
+        "r2": 0.0
+      }
     },
     {
       "business_type": "nail_salon",
@@ -99,7 +339,31 @@
       "artifact_path": "models/geopredict_nail_salon_v1.pkl",
       "artifact_version": "v1",
       "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
+      "model_version": "geo-boost-lite-v1",
+      "target_type": "proxy_location_success",
+      "training_rows": 5625,
+      "training_metrics": {
+        "count": 5625,
+        "mae": 0.048540966222222225,
+        "mse": 0.0036752963552112,
+        "rmse": 0.06062422251222031,
+        "median_absolute_error": 0.04116500000000012,
+        "max_error": 0.22,
+        "bias": 9.777777779179035e-09,
+        "mape": 0.0951350402254562,
+        "r2": 0.8213469724398768
+      },
+      "baseline_metrics": {
+        "count": 5625,
+        "mae": 0.11607846046024693,
+        "mse": 0.020572259006214323,
+        "rmse": 0.14343032805586942,
+        "median_absolute_error": 0.10034008888888879,
+        "max_error": 0.45165991111111115,
+        "bias": 4.2079919795570376e-17,
+        "mape": 0.22837776983053745,
+        "r2": 0.0
+      }
     },
     {
       "business_type": "fitness_studio",
@@ -108,7 +372,31 @@
       "artifact_path": "models/geopredict_fitness_studio_v1.pkl",
       "artifact_version": "v1",
       "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
+      "model_version": "geo-boost-lite-v1",
+      "target_type": "proxy_location_success",
+      "training_rows": 5625,
+      "training_metrics": {
+        "count": 5625,
+        "mae": 0.045278167466666686,
+        "mse": 0.003196811093656535,
+        "rmse": 0.056540349253047024,
+        "median_absolute_error": 0.038529000000000035,
+        "max_error": 0.20590100000000003,
+        "bias": 9.955555579334154e-09,
+        "mape": 0.08769917394789707,
+        "r2": 0.8303248322303813
+      },
+      "baseline_metrics": {
+        "count": 5625,
+        "mae": 0.11109226799407408,
+        "mse": 0.018840771667879508,
+        "rmse": 0.1372616904597911,
+        "median_absolute_error": 0.09633582222222214,
+        "max_error": 0.42866417777777777,
+        "bias": 3.770810824082421e-17,
+        "mape": 0.21626420725225817,
+        "r2": 0.0
+      }
     },
     {
       "business_type": "medical_clinic",
@@ -117,7 +405,31 @@
       "artifact_path": "models/geopredict_medical_clinic_v1.pkl",
       "artifact_version": "v1",
       "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
+      "model_version": "geo-boost-lite-v1",
+      "target_type": "proxy_location_success",
+      "training_rows": 5625,
+      "training_metrics": {
+        "count": 5625,
+        "mae": 0.045278167466666686,
+        "mse": 0.003196811093656535,
+        "rmse": 0.056540349253047024,
+        "median_absolute_error": 0.038529000000000035,
+        "max_error": 0.20590100000000003,
+        "bias": 9.955555579334154e-09,
+        "mape": 0.08769917394789707,
+        "r2": 0.8303248322303813
+      },
+      "baseline_metrics": {
+        "count": 5625,
+        "mae": 0.11109226799407408,
+        "mse": 0.018840771667879508,
+        "rmse": 0.1372616904597911,
+        "median_absolute_error": 0.09633582222222214,
+        "max_error": 0.42866417777777777,
+        "bias": 3.770810824082421e-17,
+        "mape": 0.21626420725225817,
+        "r2": 0.0
+      }
     },
     {
       "business_type": "dental_clinic",
@@ -126,7 +438,31 @@
       "artifact_path": "models/geopredict_dental_clinic_v1.pkl",
       "artifact_version": "v1",
       "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
+      "model_version": "geo-boost-lite-v1",
+      "target_type": "proxy_location_success",
+      "training_rows": 5625,
+      "training_metrics": {
+        "count": 5625,
+        "mae": 0.045278167466666686,
+        "mse": 0.003196811093656535,
+        "rmse": 0.056540349253047024,
+        "median_absolute_error": 0.038529000000000035,
+        "max_error": 0.20590100000000003,
+        "bias": 9.955555579334154e-09,
+        "mape": 0.08769917394789707,
+        "r2": 0.8303248322303813
+      },
+      "baseline_metrics": {
+        "count": 5625,
+        "mae": 0.11109226799407408,
+        "mse": 0.018840771667879508,
+        "rmse": 0.1372616904597911,
+        "median_absolute_error": 0.09633582222222214,
+        "max_error": 0.42866417777777777,
+        "bias": 3.770810824082421e-17,
+        "mape": 0.21626420725225817,
+        "r2": 0.0
+      }
     },
     {
       "business_type": "flower_shop",
@@ -135,7 +471,31 @@
       "artifact_path": "models/geopredict_flower_shop_v1.pkl",
       "artifact_version": "v1",
       "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
+      "model_version": "geo-boost-lite-v1",
+      "target_type": "proxy_location_success",
+      "training_rows": 5625,
+      "training_metrics": {
+        "count": 5625,
+        "mae": 0.04887479573333335,
+        "mse": 0.0037067861910698697,
+        "rmse": 0.06088338189580035,
+        "median_absolute_error": 0.04163400000000006,
+        "max_error": 0.21270200000000003,
+        "bias": 1.3155555550234708e-08,
+        "mape": 0.09579692487093032,
+        "r2": 0.8183647787353499
+      },
+      "baseline_metrics": {
+        "count": 5625,
+        "mae": 0.11554631695802471,
+        "mse": 0.020407860134510625,
+        "rmse": 0.14285608189541887,
+        "median_absolute_error": 0.09999342222222224,
+        "max_error": 0.44599342222222227,
+        "bias": -3.996802888650563e-18,
+        "mape": 0.22762875758675477,
+        "r2": 0.0
+      }
     },
     {
       "business_type": "pet_store",
@@ -144,7 +504,31 @@
       "artifact_path": "models/geopredict_pet_store_v1.pkl",
       "artifact_version": "v1",
       "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
+      "model_version": "geo-boost-lite-v1",
+      "target_type": "proxy_location_success",
+      "training_rows": 5625,
+      "training_metrics": {
+        "count": 5625,
+        "mae": 0.04887479573333335,
+        "mse": 0.0037067861910698697,
+        "rmse": 0.06088338189580035,
+        "median_absolute_error": 0.04163400000000006,
+        "max_error": 0.21270200000000003,
+        "bias": 1.3155555550234708e-08,
+        "mape": 0.09579692487093032,
+        "r2": 0.8183647787353499
+      },
+      "baseline_metrics": {
+        "count": 5625,
+        "mae": 0.11554631695802471,
+        "mse": 0.020407860134510625,
+        "rmse": 0.14285608189541887,
+        "median_absolute_error": 0.09999342222222224,
+        "max_error": 0.44599342222222227,
+        "bias": -3.996802888650563e-18,
+        "mape": 0.22762875758675477,
+        "r2": 0.0
+      }
     },
     {
       "business_type": "car_service",
@@ -153,7 +537,31 @@
       "artifact_path": "models/geopredict_car_service_v1.pkl",
       "artifact_version": "v1",
       "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
+      "model_version": "geo-boost-lite-v1",
+      "target_type": "proxy_location_success",
+      "training_rows": 5625,
+      "training_metrics": {
+        "count": 5625,
+        "mae": 0.045278167466666686,
+        "mse": 0.003196811093656535,
+        "rmse": 0.056540349253047024,
+        "median_absolute_error": 0.038529000000000035,
+        "max_error": 0.20590100000000003,
+        "bias": 9.955555579334154e-09,
+        "mape": 0.08769917394789707,
+        "r2": 0.8303248322303813
+      },
+      "baseline_metrics": {
+        "count": 5625,
+        "mae": 0.11109226799407408,
+        "mse": 0.018840771667879508,
+        "rmse": 0.1372616904597911,
+        "median_absolute_error": 0.09633582222222214,
+        "max_error": 0.42866417777777777,
+        "bias": 3.770810824082421e-17,
+        "mape": 0.21626420725225817,
+        "r2": 0.0
+      }
     },
     {
       "business_type": "dry_cleaning",
@@ -162,7 +570,31 @@
       "artifact_path": "models/geopredict_dry_cleaning_v1.pkl",
       "artifact_version": "v1",
       "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
+      "model_version": "geo-boost-lite-v1",
+      "target_type": "proxy_location_success",
+      "training_rows": 5625,
+      "training_metrics": {
+        "count": 5625,
+        "mae": 0.048540966222222225,
+        "mse": 0.0036752963552112,
+        "rmse": 0.06062422251222031,
+        "median_absolute_error": 0.04116500000000012,
+        "max_error": 0.22,
+        "bias": 9.777777779179035e-09,
+        "mape": 0.0951350402254562,
+        "r2": 0.8213469724398768
+      },
+      "baseline_metrics": {
+        "count": 5625,
+        "mae": 0.11607846046024693,
+        "mse": 0.020572259006214323,
+        "rmse": 0.14343032805586942,
+        "median_absolute_error": 0.10034008888888879,
+        "max_error": 0.45165991111111115,
+        "bias": 4.2079919795570376e-17,
+        "mape": 0.22837776983053745,
+        "r2": 0.0
+      }
     },
     {
       "business_type": "children_education",
@@ -171,7 +603,31 @@
       "artifact_path": "models/geopredict_children_education_v1.pkl",
       "artifact_version": "v1",
       "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
+      "model_version": "geo-boost-lite-v1",
+      "target_type": "proxy_location_success",
+      "training_rows": 5625,
+      "training_metrics": {
+        "count": 5625,
+        "mae": 0.045278167466666686,
+        "mse": 0.003196811093656535,
+        "rmse": 0.056540349253047024,
+        "median_absolute_error": 0.038529000000000035,
+        "max_error": 0.20590100000000003,
+        "bias": 9.955555579334154e-09,
+        "mape": 0.08769917394789707,
+        "r2": 0.8303248322303813
+      },
+      "baseline_metrics": {
+        "count": 5625,
+        "mae": 0.11109226799407408,
+        "mse": 0.018840771667879508,
+        "rmse": 0.1372616904597911,
+        "median_absolute_error": 0.09633582222222214,
+        "max_error": 0.42866417777777777,
+        "bias": 3.770810824082421e-17,
+        "mape": 0.21626420725225817,
+        "r2": 0.0
+      }
     },
     {
       "business_type": "retail",
@@ -180,7 +636,31 @@
       "artifact_path": "models/geopredict_retail_v1.pkl",
       "artifact_version": "v1",
       "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
+      "model_version": "geo-boost-lite-v1",
+      "target_type": "proxy_location_success",
+      "training_rows": 5625,
+      "training_metrics": {
+        "count": 5625,
+        "mae": 0.04887479573333335,
+        "mse": 0.0037067861910698697,
+        "rmse": 0.06088338189580035,
+        "median_absolute_error": 0.04163400000000006,
+        "max_error": 0.21270200000000003,
+        "bias": 1.3155555550234708e-08,
+        "mape": 0.09579692487093032,
+        "r2": 0.8183647787353499
+      },
+      "baseline_metrics": {
+        "count": 5625,
+        "mae": 0.11554631695802471,
+        "mse": 0.020407860134510625,
+        "rmse": 0.14285608189541887,
+        "median_absolute_error": 0.09999342222222224,
+        "max_error": 0.44599342222222227,
+        "bias": -3.996802888650563e-18,
+        "mape": 0.22762875758675477,
+        "r2": 0.0
+      }
     }
   ]
 }
