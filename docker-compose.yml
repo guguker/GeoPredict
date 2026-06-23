@@ -6,4 +6,10 @@ services:
       - "8000:8000"
     environment:
       PYTHONUNBUFFERED: "1"
+      GEOPREDICT_OSM_CACHE_DIR: "/tmp/geopredict-osm-cache"
+    volumes:
+      - geopredict_osm_cache:/tmp/geopredict-osm-cache
     restart: unless-stopped
+
+volumes:
+  geopredict_osm_cache:

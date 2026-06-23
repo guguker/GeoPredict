@@ -41,6 +41,7 @@ class GradientBoostingRegressorLite:
         self.stumps: list[DecisionStump] = []
         self.business_type: str | None = None
         self.profile_title: str | None = None
+        self.model_family: str | None = None
 
     def fit(self, rows: list[dict[str, Any]], targets: list[float]) -> "GradientBoostingRegressorLite":
         if not rows:
@@ -121,4 +122,5 @@ def train_reference_model(profile: Any) -> GradientBoostingRegressorLite:
     model = GradientBoostingRegressorLite().fit(rows, targets)
     model.business_type = profile.business_type
     model.profile_title = profile.title
+    model.model_family = getattr(profile, "model_family", profile.business_type)
     return model

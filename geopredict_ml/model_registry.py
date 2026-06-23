@@ -13,9 +13,7 @@ MODEL_ARTIFACT_VERSION = "v1"
 
 
 def model_artifact_name(profile: BusinessProfile, version: str = MODEL_ARTIFACT_VERSION) -> str:
-    if profile.business_type == "pickup_point":
-        return f"geopredict_pvz_{version}.pkl"
-    return f"geopredict_{profile.business_type}_{version}.pkl"
+    return f"geopredict_{profile.model_family}_{version}.pkl"
 
 
 def model_artifact_path(
@@ -51,7 +49,11 @@ def load_explicit_model(path: str | Path, profile: BusinessProfile) -> GradientB
 
 
 def train_registered_model(profile: BusinessProfile) -> GradientBoostingRegressorLite:
-    return train_reference_model(profile)
+    model = train_reference_model(profile)
+    model.business_type = None
+    model.profile_title = profile.model_family
+    model.model_family = profile.model_family
+    return model
 
 
 def train_all_registered_models(
@@ -62,11 +64,16 @@ def train_all_registered_models(
     output_dir.mkdir(parents=True, exist_ok=True)
     artifacts = []
 
+    profiles_by_family: dict[str, list[BusinessProfile]] = {}
     for profile in PROFILE_LIST:
-        model = train_registered_model(profile)
-        path = model_artifact_path(profile, models_dir=output_dir, version=version)
+        profiles_by_family.setdefault(profile.model_family, []).append(profile)
+
+    for family_profiles in profiles_by_family.values():
+        representative = family_profiles[0]
+        model = train_registered_model(representative)
+        path = model_artifact_path(representative, models_dir=output_dir, version=version)
         model.save(path)
-        artifacts.append(_artifact_metadata(profile, model, path, version))
+        artifacts.append(_artifact_metadata(family_profiles, model, path, version))
 
     write_model_manifest(artifacts, output_dir / "manifest.json")
     return artifacts
@@ -82,15 +89,16 @@ def write_model_manifest(artifacts: list[dict[str, Any]], path: str | Path) -> N
 
 
 def _artifact_metadata(
-    profile: BusinessProfile,
+    profiles: list[BusinessProfile],
     model: GradientBoostingRegressorLite,
     path: Path,
     artifact_version: str,
 ) -> dict[str, Any]:
+    representative = profiles[0]
     return {
-        "business_type": profile.business_type,
-        "title": profile.title,
-        "category": profile.category,
+        "model_family": representative.model_family,
+        "business_types": [profile.business_type for profile in profiles],
+        "titles": [profile.title for profile in profiles],
         "artifact_path": str(path),
         "artifact_version": artifact_version,
         "model_type": model.model_type,
@@ -103,6 +111,15 @@ def _validate_model_profile(
     profile: BusinessProfile,
     path: Path,
 ) -> None:
+    artifact_family = getattr(model, "model_family", None)
+    if artifact_family:
+        if artifact_family != profile.model_family:
+            raise ValueError(
+                f"Model artifact {path} belongs to family {artifact_family!r}, "
+                f"but request requires {profile.model_family!r}"
+            )
+        return
+
     artifact_business_type = getattr(model, "business_type", None)
     if artifact_business_type and artifact_business_type != profile.business_type:
         raise ValueError(

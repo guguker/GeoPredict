@@ -13,37 +13,37 @@ from geopredict_ml.features import categorize_poi
 
 
 class BusinessProfileCatalogTest(unittest.TestCase):
-    def test_catalog_contains_fixed_twenty_business_types(self):
+    def test_catalog_contains_fixed_ten_business_groups(self):
         catalog = business_type_catalog()
         business_types = supported_business_types()
 
-        self.assertEqual(len(catalog), 20)
-        self.assertEqual(len(business_types), 20)
-        self.assertEqual(len(set(business_types)), 20)
+        self.assertEqual(len(catalog), 10)
+        self.assertEqual(len(business_types), 10)
+        self.assertEqual(len(set(business_types)), 10)
         self.assertIn("pickup_point", business_types)
         self.assertIn("coffee_shop", business_types)
         self.assertIn("beer_store", business_types)
+        self.assertNotIn("nail_salon", business_types)
+        self.assertNotIn("dental_clinic", business_types)
 
     def test_aliases_resolve_to_primary_business_types(self):
         self.assertEqual(get_business_profile("кофейня").business_type, "coffee_shop")
         self.assertEqual(get_business_profile("пивнуха").business_type, "beer_store")
         self.assertEqual(get_business_profile("ozon").business_type, "pickup_point")
-        self.assertEqual(get_business_profile("стоматология").business_type, "dental_clinic")
-        self.assertEqual(get_business_profile("💅 Маникюр").business_type, "nail_salon")
+        self.assertEqual(get_business_profile("стоматология").business_type, "medical_clinic")
+        self.assertEqual(get_business_profile("💅 Маникюр").business_type, "beauty_salon")
         self.assertEqual(get_business_profile("🍺 Пивной магазин").business_type, "beer_store")
 
     def test_frontend_display_labels_resolve_to_primary_business_types(self):
         labels = {
-            "Магазин у дома": "retail",
+            "Магазин у дома": "grocery_store",
             "Продуктовый магазин": "grocery_store",
             "Фастфуд": "fast_food",
             "Пивной магазин": "beer_store",
             "Салон красоты": "beauty_salon",
-            "Маникюр": "nail_salon",
+            "Маникюр": "beauty_salon",
             "Медицинская клиника": "medical_clinic",
-            "Цветочный магазин": "flower_shop",
             "Автосервис": "car_service",
-            "Детский центр": "children_education",
         }
 
         for label, business_type in labels.items():

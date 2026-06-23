@@ -9,6 +9,7 @@ from .geo import (
     meters_to_lon_degrees,
     normalize_ring,
     point_in_polygon,
+    polygon_area_square_meters,
     polygon_bbox,
     polygon_centroid,
     regular_hexagon,
@@ -31,6 +32,23 @@ H3_APPROX_RADIUS_M = {
     10: 66.0,
 }
 
+H3_APPROX_AREA_KM2 = {
+    7: 5.16,
+    8: 0.737,
+    9: 0.105,
+    10: 0.015,
+}
+
+
+class AnalysisAreaTooLargeError(ValueError):
+    def __init__(self, estimated_cells: int, max_cells: int) -> None:
+        self.estimated_cells = estimated_cells
+        self.max_cells = max_cells
+        super().__init__(
+            f"Selected area requires approximately {estimated_cells} cells; "
+            f"the synchronous limit is {max_cells}. Draw a smaller area or use a lower H3 resolution."
+        )
+
 
 def validate_polygon_geometry(geometry: dict) -> list[list[float]]:
     if not isinstance(geometry, dict) or geometry.get("type") != "Polygon":
@@ -42,13 +60,27 @@ def validate_polygon_geometry(geometry: dict) -> list[list[float]]:
 
 
 def polygon_to_grid_cells(geometry: dict, resolution: int = 9, max_cells: int = 1_000) -> list[GridCell]:
-    ring = validate_polygon_geometry(geometry)
+    ring = validate_analysis_area(geometry, resolution=resolution, max_cells=max_cells)
 
     h3_cells = _polygon_to_h3_cells_if_available(ring, resolution)
     if h3_cells:
-        return h3_cells[:max_cells]
+        if len(h3_cells) > max_cells:
+            raise AnalysisAreaTooLargeError(len(h3_cells), max_cells)
+        return h3_cells
 
     return _polygon_to_fallback_hex_cells(ring, resolution, max_cells)
+
+
+def validate_analysis_area(
+    geometry: dict,
+    resolution: int = 9,
+    max_cells: int = 1_000,
+) -> list[list[float]]:
+    ring = validate_polygon_geometry(geometry)
+    estimated_cells = _estimate_cell_count(ring, resolution)
+    if estimated_cells > max_cells:
+        raise AnalysisAreaTooLargeError(estimated_cells, max_cells)
+    return ring
 
 
 def _polygon_to_h3_cells_if_available(ring: list[list[float]], resolution: int) -> list[GridCell]:
@@ -115,19 +147,27 @@ def _polygon_to_fallback_hex_cells(ring: list[list[float]], resolution: int, max
 
     row = 0
     lat = min_lat - lat_step
-    while lat <= max_lat + lat_step and len(cells) < max_cells:
+    while lat <= max_lat + lat_step and len(cells) <= max_cells:
         offset = lon_step / 2.0 if row % 2 else 0.0
         lon = min_lon - lon_step + offset
-        while lon <= max_lon + lon_step and len(cells) < max_cells:
+        while lon <= max_lon + lon_step and len(cells) <= max_cells:
             if point_in_polygon(lon, lat, ring):
                 cells.append(_fallback_cell(lon, lat, radius_m, resolution))
             lon += lon_step
         lat += lat_step
         row += 1
 
+    if len(cells) > max_cells:
+        raise AnalysisAreaTooLargeError(len(cells), max_cells)
     if not cells:
         cells.append(_fallback_cell(center_lon, center_lat, radius_m, resolution))
     return cells
+
+
+def _estimate_cell_count(ring: list[list[float]], resolution: int) -> int:
+    area_km2 = polygon_area_square_meters(ring) / 1_000_000.0
+    cell_area_km2 = H3_APPROX_AREA_KM2.get(resolution, H3_APPROX_AREA_KM2[9])
+    return max(1, math.ceil(area_km2 / cell_area_km2))
 
 
 def _fallback_cell(lon: float, lat: float, radius_m: float, resolution: int) -> GridCell:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import math
+import re
 from typing import Any
 
 from .business import BusinessProfile, normalize_text
@@ -47,13 +48,19 @@ def normalize_geojson_pois(geojson: dict | None) -> list[dict[str, Any]]:
 def categorize_poi(tags: dict[str, Any], profile: BusinessProfile) -> PoiCategory:
     normalized_tags = {normalize_text(key): normalize_text(value) for key, value in tags.items()}
     values = set(normalized_tags.values())
-    combined = " ".join([*normalized_tags.keys(), *normalized_tags.values()])
     competitor_keywords = tuple(normalize_text(keyword) for keyword in profile.competitor_keywords)
     competitor_tag_values = {normalize_text(value) for value in profile.competitor_tag_values}
-
-    competitor = any(keyword in combined for keyword in competitor_keywords) or bool(
-        values.intersection(competitor_tag_values)
+    exact_tag_match = any(
+        normalized_tags.get(normalize_text(key)) == normalize_text(value)
+        for key, value in profile.competitor_tags
     )
+    exact_value_match = bool(values.intersection(competitor_tag_values))
+    searchable_text = " ".join(
+        normalized_tags.get(key, "")
+        for key in ("name", "brand", "operator", "branch", "description")
+    )
+    keyword_match = any(_contains_term(searchable_text, keyword) for keyword in competitor_keywords)
+    competitor = exact_tag_match or exact_value_match or keyword_match
 
     amenity = normalized_tags.get("amenity", "")
     shop = normalized_tags.get("shop", "")
@@ -164,3 +171,9 @@ def saturating_count(count: float, scale: float) -> float:
     if scale <= 0:
         return 0.0
     return clamp(1.0 - math.exp(-max(0.0, count) / scale))
+
+
+def _contains_term(text: str, term: str) -> bool:
+    if not term:
+        return False
+    return re.search(rf"(?:^|\s){re.escape(term)}(?:$|\s)", text) is not None

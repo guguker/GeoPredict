@@ -49,6 +49,19 @@ class PickupPointFeatureTest(unittest.TestCase):
         self.assertGreater(features["traffic_potential"], 0)
         self.assertGreater(features["density_score"], 0)
 
+    def test_competitor_matching_does_not_use_arbitrary_substrings(self):
+        beer = get_business_profile("beer_store")
+        car_service = get_business_profile("car_service")
+        grocery = get_business_profile("grocery_store")
+
+        self.assertFalse(categorize_poi({"name": "Барбарис", "amenity": "school"}, beer).is_competitor)
+        self.assertFalse(categorize_poi({"name": "Остановка", "highway": "bus_stop"}, car_service).is_competitor)
+        self.assertFalse(categorize_poi({"shop": "books", "name": "Книжный магазин"}, grocery).is_competitor)
+
+        self.assertTrue(categorize_poi({"amenity": "pub", "name": "Local Pub"}, beer).is_competitor)
+        self.assertTrue(categorize_poi({"shop": "car_repair", "name": "СТО"}, car_service).is_competitor)
+        self.assertTrue(categorize_poi({"shop": "supermarket", "name": "Market"}, grocery).is_competitor)
+
 
 if __name__ == "__main__":
     unittest.main()

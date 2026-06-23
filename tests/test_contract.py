@@ -95,21 +95,32 @@ class AnalyzeContractTest(unittest.TestCase):
         self.assertEqual(top["h3_id"], ranked_first["properties"]["h3_id"])
         self.assertEqual(top["suitability"], ranked_first["properties"]["suitability"])
 
-    def test_fallback_without_pois_is_not_marked_as_priority(self):
+    def test_empty_pois_disable_recommendations(self):
         result = analyze_request(
             SAMPLE_REQUEST,
             pois_geojson=None,
-            data_sources=["osm_unavailable"],
-            data_warnings=["OSM unavailable"],
+            data_sources=[],
         )
 
-        self.assertEqual(result["metadata"]["data_sources"], ["osm_unavailable"])
-        self.assertEqual(result["metadata"]["data_status"], "degraded")
-        self.assertEqual(result["metadata"]["data_warnings"], ["OSM unavailable"])
+        self.assertEqual(result["metadata"]["data_status"], "insufficient")
+        self.assertFalse(result["metadata"]["recommendations_available"])
+        self.assertEqual(result["metadata"]["top_candidates"], [])
         self.assertEqual(result["metadata"]["recommendation_counts"]["high_priority"], 0)
         self.assertTrue(
-            all(feature["properties"]["recommendation"] != "high_priority" for feature in result["features"])
+            all(feature["properties"]["recommendation"] == "insufficient_data" for feature in result["features"])
         )
+
+    def test_mock_source_is_explicit_in_response(self):
+        result = analyze_request(
+            SAMPLE_REQUEST,
+            pois_geojson=SAMPLE_POIS,
+            data_sources=["mock_sample"],
+            data_warnings=["Демонстрационные данные"],
+        )
+
+        self.assertEqual(result["metadata"]["data_status"], "mock")
+        self.assertTrue(result["metadata"]["recommendations_available"])
+        self.assertEqual(result["metadata"]["data_warnings"], ["Демонстрационные данные"])
 
     def test_high_priority_requires_top_rank_not_only_high_score(self):
         candidate = {"selection_score": 0.9, "data_confidence": 0.9}
@@ -141,7 +152,7 @@ class AnalyzeContractTest(unittest.TestCase):
         self.assertEqual(result["metadata"]["business_type"], "custom_osm")
         self.assertTrue(result["metadata"]["is_custom_business"])
         self.assertEqual(result["metadata"]["business_query"], "рыболовный магазин")
-        self.assertEqual(result["metadata"]["model_source"], "reference_in_memory")
+        self.assertEqual(result["metadata"]["model_source"], "registered_artifact")
 
     def test_all_catalog_titles_use_registered_models_not_custom_fallback(self):
         for profile in PROFILE_LIST:

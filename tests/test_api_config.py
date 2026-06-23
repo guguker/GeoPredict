@@ -2,7 +2,14 @@ import os
 import unittest
 from unittest.mock import patch
 
-from api.analyze import DEFAULT_CORS_ORIGINS, business_types, get_cors_origins, resolve_poi_source
+from api.analyze import (
+    DEFAULT_CORS_ORIGINS,
+    DataSourceUnavailableError,
+    MockDataUnavailableError,
+    business_types,
+    get_cors_origins,
+    resolve_poi_source,
+)
 
 
 class ApiConfigTest(unittest.TestCase):
@@ -22,33 +29,60 @@ class ApiConfigTest(unittest.TestCase):
 
         self.assertEqual(origins, ["http://localhost:8080", "https://example.com"])
 
-    def test_resolve_poi_source_falls_back_when_live_osm_fails(self):
-        payload = {"geometry": {"type": "Polygon", "coordinates": []}, "use_live_osm": True}
+    def test_resolve_poi_source_raises_when_live_osm_fails(self):
+        payload = {"geometry": {"type": "Polygon", "coordinates": []}, "data_mode": "live"}
 
         def failing_fetcher(_geometry):
             raise RuntimeError("HTTP Error 429: Too Many Requests")
 
-        pois, data_sources, data_warnings = resolve_poi_source(payload, fetcher=failing_fetcher)
+        with self.assertRaises(DataSourceUnavailableError) as context:
+            resolve_poi_source(payload, fetcher=failing_fetcher)
 
-        self.assertIsNone(pois)
-        self.assertEqual(data_sources, ["osm_unavailable"])
-        self.assertEqual(len(data_warnings), 1)
-        self.assertIn("fallback scoring", data_warnings[0])
+        self.assertIn("429", str(context.exception))
 
-    def test_resolve_poi_source_skips_fetcher_when_live_osm_disabled(self):
-        payload = {"geometry": {"type": "Polygon", "coordinates": []}, "use_live_osm": False}
+    def test_resolve_poi_source_marks_explicit_mock_data(self):
+        payload = {
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [[37.6173, 55.7558], [37.6273, 55.7558], [37.6273, 55.7658], [37.6173, 55.7558]]
+                ],
+            },
+            "business_type": "pickup_point",
+            "data_mode": "mock",
+        }
+        mock_geojson = {"type": "FeatureCollection", "features": []}
 
-        pois, data_sources, data_warnings = resolve_poi_source(payload, fetcher=lambda _geometry: self.fail())
+        source = resolve_poi_source(
+            payload,
+            fetcher=lambda _geometry: self.fail(),
+            mock_loader=lambda _payload: mock_geojson,
+        )
 
-        self.assertIsNone(pois)
-        self.assertEqual(data_sources, [])
-        self.assertEqual(data_warnings, [])
+        self.assertEqual(source.geojson, mock_geojson)
+        self.assertEqual(source.source, "mock_sample")
+        self.assertTrue(source.warnings)
+
+    def test_mock_is_rejected_for_unsupported_profile(self):
+        payload = {
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [[37.6173, 55.7558], [37.6273, 55.7558], [37.6273, 55.7658], [37.6173, 55.7558]]
+                ],
+            },
+            "business_type": "coffee_shop",
+            "data_mode": "mock",
+        }
+
+        with self.assertRaises(MockDataUnavailableError):
+            resolve_poi_source(payload)
 
     def test_business_types_helper_returns_catalog_for_frontend(self):
         result = business_types()
 
-        self.assertEqual(result["total"], 20)
-        self.assertEqual(len(result["business_types"]), 20)
+        self.assertEqual(result["total"], 10)
+        self.assertEqual(len(result["business_types"]), 10)
         self.assertEqual(result["business_types"][0]["business_type"], "pickup_point")
 
     def test_business_types_helper_filters_by_user_query(self):

@@ -6,7 +6,7 @@ import unicodedata
 
 
 def normalize_text(value: object) -> str:
-    text = unicodedata.normalize("NFKD", str(value or "")).lower()
+    text = unicodedata.normalize("NFKC", str(value or "")).lower()
     text = text.replace("ё", "е")
     text = re.sub(r"[^\w\s]+", " ", text)
     return re.sub(r"\s+", " ", text).strip()
@@ -28,6 +28,8 @@ class BusinessProfile:
     examples: tuple[str, ...] = ()
     is_custom: bool = False
     source_query: str | None = None
+    competitor_tags: tuple[tuple[str, str], ...] = ()
+    model_family: str = "local_business"
 
 
 class UnsupportedBusinessTypeError(ValueError):
@@ -173,6 +175,13 @@ PICKUP_POINT_PROFILE = BusinessProfile(
     target_weights=PICKUP_POINT_WEIGHTS,
     category="marketplace_logistics",
     examples=("Ozon", "Wildberries", "Яндекс Маркет", "СДЭК", "Boxberry"),
+    competitor_tags=(
+        ("shop", "outpost"),
+        ("amenity", "parcel_locker"),
+        ("amenity", "post_office"),
+        ("office", "courier"),
+    ),
+    model_family="pickup_point",
 )
 
 
@@ -191,6 +200,8 @@ def _profile(
     examples: tuple[str, ...] = (),
     is_custom: bool = False,
     source_query: str | None = None,
+    competitor_tags: tuple[tuple[str, str], ...] = (),
+    model_family: str | None = None,
 ) -> BusinessProfile:
     return BusinessProfile(
         business_type=business_type,
@@ -207,6 +218,8 @@ def _profile(
         examples=examples,
         is_custom=is_custom,
         source_query=source_query,
+        competitor_tags=competitor_tags,
+        model_family=model_family or category,
     )
 
 
@@ -223,6 +236,8 @@ COFFEE_SHOP_PROFILE = _profile(
     FOOD_SERVICE_WEIGHTS,
     "food_service",
     ("кофейня у дома", "кофе с собой", "specialty coffee"),
+    competitor_tags=(("amenity", "cafe"),),
+    model_family="food_service",
 )
 
 BEER_STORE_PROFILE = _profile(
@@ -238,6 +253,13 @@ BEER_STORE_PROFILE = _profile(
     FOOD_SERVICE_WEIGHTS,
     "food_service",
     ("разливное пиво", "крафтовый бар", "алкомаркет"),
+    competitor_tags=(
+        ("shop", "alcohol"),
+        ("shop", "beverages"),
+        ("amenity", "bar"),
+        ("amenity", "pub"),
+    ),
+    model_family="food_service",
 )
 
 PHARMACY_PROFILE = _profile(
@@ -253,12 +275,24 @@ PHARMACY_PROFILE = _profile(
     CONVENIENCE_RETAIL_WEIGHTS,
     "health_retail",
     ("сетевые аптеки", "аптечный пункт"),
+    competitor_tags=(("amenity", "pharmacy"), ("shop", "chemist")),
+    model_family="convenience_retail",
 )
 
 GROCERY_STORE_PROFILE = _profile(
     "grocery_store",
-    "Продуктовый магазин",
-    ("grocery_store", "grocery", "supermarket", "продукты", "продуктовый", "магазин продуктов"),
+    "Продуктовый магазин / магазин у дома",
+    (
+        "grocery_store",
+        "grocery",
+        "supermarket",
+        "продукты",
+        "продуктовый",
+        "продуктовый магазин",
+        "магазин продуктов",
+        "магазин у дома",
+        "retail",
+    ),
     ("grocery", "supermarket", "продукты", "пятерочка", "магнит", "дикси", "вкусвилл", "перекресток"),
     ("supermarket", "convenience", "grocery"),
     450,
@@ -268,6 +302,12 @@ GROCERY_STORE_PROFILE = _profile(
     CONVENIENCE_RETAIL_WEIGHTS,
     "daily_retail",
     ("магазин у дома", "мини-маркет", "супермаркет"),
+    competitor_tags=(
+        ("shop", "supermarket"),
+        ("shop", "convenience"),
+        ("shop", "grocery"),
+    ),
+    model_family="convenience_retail",
 )
 
 BAKERY_PROFILE = _profile(
@@ -298,6 +338,8 @@ FAST_FOOD_PROFILE = _profile(
     FOOD_SERVICE_WEIGHTS,
     "food_service",
     ("шаурма", "бургерная", "пицца to go"),
+    competitor_tags=(("amenity", "fast_food"), ("amenity", "food_court")),
+    model_family="food_service",
 )
 
 RESTAURANT_PROFILE = _profile(
@@ -313,21 +355,55 @@ RESTAURANT_PROFILE = _profile(
     FOOD_SERVICE_WEIGHTS,
     "food_service",
     ("кафе", "ресторан", "бистро"),
+    competitor_tags=(("amenity", "restaurant"),),
+    model_family="food_service",
 )
 
 BEAUTY_SALON_PROFILE = _profile(
     "beauty_salon",
-    "Салон красоты",
-    ("beauty_salon", "beauty", "салон красоты", "косметология", "бьюти"),
-    ("beauty", "салон красоты", "косметология", "beauty salon", "spa", "бьюти"),
-    ("beauty", "cosmetics", "spa"),
+    "Салон красоты / барбершоп / маникюр",
+    (
+        "beauty_salon",
+        "beauty",
+        "салон красоты",
+        "косметология",
+        "бьюти",
+        "barbershop",
+        "barber",
+        "барбершоп",
+        "маникюр",
+        "ногти",
+        "nail_salon",
+        "nails",
+    ),
+    (
+        "beauty",
+        "салон красоты",
+        "косметология",
+        "beauty salon",
+        "spa",
+        "бьюти",
+        "barbershop",
+        "barber",
+        "барбершоп",
+        "маникюр",
+        "nail studio",
+    ),
+    ("beauty", "cosmetics", "spa", "hairdresser", "nails"),
     450,
     5.5,
     4,
     3,
     PERSONAL_SERVICE_WEIGHTS,
     "personal_service",
-    ("салон красоты", "косметология", "spa"),
+    ("салон красоты", "косметология", "spa", "барбершоп", "маникюр"),
+    competitor_tags=(
+        ("shop", "beauty"),
+        ("shop", "hairdresser"),
+        ("beauty", "nails"),
+        ("leisure", "spa"),
+    ),
+    model_family="personal_service",
 )
 
 BARBERSHOP_PROFILE = _profile(
@@ -377,17 +453,49 @@ FITNESS_STUDIO_PROFILE = _profile(
 
 MEDICAL_CLINIC_PROFILE = _profile(
     "medical_clinic",
-    "Медицинская клиника",
-    ("medical_clinic", "clinic", "doctors", "медицинская клиника", "медцентр", "клиника"),
-    ("clinic", "doctors", "medical", "медцентр", "клиника", "медицинский центр", "лаборатория"),
-    ("clinic", "doctors", "laboratory", "medical"),
+    "Медицинская клиника / стоматология",
+    (
+        "medical_clinic",
+        "clinic",
+        "doctors",
+        "медицинская клиника",
+        "медцентр",
+        "клиника",
+        "dental_clinic",
+        "dentist",
+        "dental",
+        "стоматология",
+        "зубная клиника",
+    ),
+    (
+        "clinic",
+        "doctors",
+        "medical",
+        "медцентр",
+        "клиника",
+        "медицинский центр",
+        "лаборатория",
+        "dentist",
+        "dental",
+        "стоматология",
+    ),
+    ("clinic", "doctors", "laboratory", "medical", "dentist"),
     700,
     4.0,
     3,
     2,
     DESTINATION_SERVICE_WEIGHTS,
     "medical_service",
-    ("медцентр", "частная клиника", "лаборатория"),
+    ("медцентр", "частная клиника", "лаборатория", "стоматология"),
+    competitor_tags=(
+        ("amenity", "clinic"),
+        ("amenity", "doctors"),
+        ("amenity", "dentist"),
+        ("healthcare", "clinic"),
+        ("healthcare", "doctor"),
+        ("healthcare", "dentist"),
+    ),
+    model_family="destination_service",
 )
 
 DENTAL_CLINIC_PROFILE = _profile(
@@ -448,6 +556,13 @@ CAR_SERVICE_PROFILE = _profile(
     DESTINATION_SERVICE_WEIGHTS,
     "auto_service",
     ("автосервис", "шиномонтаж", "автомойка"),
+    competitor_tags=(
+        ("shop", "car_repair"),
+        ("shop", "tyres"),
+        ("shop", "auto_parts"),
+        ("amenity", "car_wash"),
+    ),
+    model_family="destination_service",
 )
 
 DRY_CLEANING_PROFILE = _profile(
@@ -526,21 +641,11 @@ PROFILE_LIST = (
     BEER_STORE_PROFILE,
     PHARMACY_PROFILE,
     GROCERY_STORE_PROFILE,
-    BAKERY_PROFILE,
     FAST_FOOD_PROFILE,
     RESTAURANT_PROFILE,
     BEAUTY_SALON_PROFILE,
-    BARBERSHOP_PROFILE,
-    NAIL_SALON_PROFILE,
-    FITNESS_STUDIO_PROFILE,
     MEDICAL_CLINIC_PROFILE,
-    DENTAL_CLINIC_PROFILE,
-    FLOWER_SHOP_PROFILE,
-    PET_STORE_PROFILE,
     CAR_SERVICE_PROFILE,
-    DRY_CLEANING_PROFILE,
-    CHILDREN_EDUCATION_PROFILE,
-    RETAIL_PROFILE,
 )
 
 PROFILES = {profile.business_type: profile for profile in PROFILE_LIST}
@@ -646,6 +751,7 @@ def build_custom_business_profile(query: str) -> BusinessProfile:
         (raw_query, "OSM name/brand/tag search"),
         is_custom=True,
         source_query=raw_query,
+        model_family="convenience_retail",
     )
 
 

@@ -24,9 +24,14 @@ def analyze_request(
     geometry = request_payload.get("geometry")
     validate_polygon_geometry(geometry)
 
-    business_type = request_payload.get("business_type")
-    if not business_type:
+    requested_business_type = request_payload.get("business_type")
+    if not requested_business_type:
         raise ValueError("business_type is required")
+    business_type = requested_business_type
+    if str(requested_business_type) == "custom_osm":
+        business_type = request_payload.get("business_query")
+        if not business_type or len(str(business_type).strip()) < 2:
+            raise ValueError("business_query is required when business_type is custom_osm")
 
     resolution = int(request_payload.get("h3_resolution", 9))
     allow_custom_business = bool(request_payload.get("allow_custom_business", True))
@@ -40,11 +45,16 @@ def analyze_request(
     model_predictions = model.predict(feature_rows)
     candidate_scores = [_candidate_score(row, score) for row, score in zip(feature_rows, model_predictions)]
     ranked_predictions = _rank_candidates(cells, feature_rows, candidate_scores)
+    recommendations_available = bool(pois)
 
     features = []
     for cell, row, raw_score, candidate in zip(cells, feature_rows, model_predictions, candidate_scores):
         rank_info = ranked_predictions[cell.h3_id]
-        recommendation = _recommendation_for_candidate(candidate, rank_info["rank"], len(cells))
+        recommendation = (
+            _recommendation_for_candidate(candidate, rank_info["rank"], len(cells))
+            if recommendations_available
+            else {"code": "insufficient_data", "label": "Недостаточно данных"}
+        )
         properties = {
             "h3_id": cell.h3_id,
             "rank": rank_info["rank"],
@@ -71,8 +81,22 @@ def analyze_request(
     avg_suitability = round(sum(selection_scores) / len(selection_scores), 3) if selection_scores else 0.0
     avg_model_score = round(sum(model_predictions) / len(model_predictions), 3) if model_predictions else 0.0
     grid_backend = cells[0].backend if cells else "unknown"
-    top_candidates = _top_candidates(cells, model_predictions, candidate_scores, ranked_predictions)
-    recommendation_counts = _recommendation_counts(cells, candidate_scores, ranked_predictions)
+    top_candidates = (
+        _top_candidates(cells, model_predictions, candidate_scores, ranked_predictions)
+        if recommendations_available
+        else []
+    )
+    recommendation_counts = (
+        _recommendation_counts(cells, candidate_scores, ranked_predictions)
+        if recommendations_available
+        else {
+            "high_priority": 0,
+            "promising": 0,
+            "manual_review": 0,
+            "low_priority": 0,
+            "insufficient_data": len(cells),
+        }
+    )
 
     return {
         "type": "FeatureCollection",
@@ -87,10 +111,23 @@ def analyze_request(
             "business_category": profile.category,
             "business_query": profile.source_query,
             "is_custom_business": profile.is_custom,
+            "business_interpretation": {
+                "mode": "custom_osm" if profile.is_custom else "fixed_profile",
+                "requested": str(requested_business_type),
+                "source_query": profile.source_query,
+                "resolved_business_type": profile.business_type,
+                "title": profile.title,
+                "osm_tags": [
+                    {"key": key, "value": value}
+                    for key, value in profile.competitor_tags
+                ],
+                "osm_keywords": list(profile.competitor_keywords[:12]),
+            },
             "data_sources": resolved_data_sources,
-            "data_status": _data_status(resolved_data_sources, resolved_data_warnings),
+            "data_status": _data_status(resolved_data_sources, len(pois)),
             "data_warnings": resolved_data_warnings,
             "poi_count": len(pois),
+            "recommendations_available": recommendations_available,
             "model_active": True,
             "model_type": model.model_type,
             "model_version": model.model_version,
@@ -119,12 +156,16 @@ def _load_or_train_model(
     return train_reference_model(profile), "reference_in_memory", None
 
 
-def _data_status(data_sources: list[str], data_warnings: list[str]) -> str:
-    if data_warnings or "osm_unavailable" in data_sources:
-        return "degraded"
-    if data_sources:
+def _data_status(data_sources: list[str], poi_count: int) -> str:
+    if "mock_sample" in data_sources:
+        return "mock"
+    if not poi_count:
+        return "insufficient"
+    if "osm_cache" in data_sources or "osm_cache_stale" in data_sources:
+        return "cached"
+    if "osm_live" in data_sources or "osm" in data_sources:
         return "live"
-    return "empty"
+    return "unknown"
 
 
 def _candidate_score(features: dict[str, Any], model_score: float) -> dict[str, float]:

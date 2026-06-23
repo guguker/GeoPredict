@@ -12,14 +12,16 @@ from geopredict_ml.model_registry import (
 
 
 class ModelRegistryTest(unittest.TestCase):
-    def test_model_artifact_path_uses_business_type(self):
+    def test_model_artifact_path_uses_shared_model_family(self):
         coffee = get_business_profile("coffee_shop")
+        restaurant = get_business_profile("restaurant")
 
         path = model_artifact_path(coffee)
 
-        self.assertEqual(path, Path("models/geopredict_coffee_shop_v1.pkl"))
+        self.assertEqual(path, Path("models/geopredict_food_service_v1.pkl"))
+        self.assertEqual(path, model_artifact_path(restaurant))
 
-    def test_train_all_registered_models_writes_one_artifact_per_business_type(self):
+    def test_train_all_registered_models_writes_one_artifact_per_model_family(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             artifacts = train_all_registered_models(temp_dir)
             manifest = Path(temp_dir) / "manifest.json"
@@ -30,14 +32,14 @@ class ModelRegistryTest(unittest.TestCase):
             pickup = load_model_for_profile(get_business_profile("pickup_point"), models_dir=temp_dir)
             self.assertTrue(manifest.exists())
             self.assertIsNotNone(pickup)
-            self.assertEqual(pickup.business_type, "pickup_point")
+            self.assertEqual(pickup.model_family, "pickup_point")
 
-        self.assertEqual(len(artifacts), 20)
+            self.assertEqual(len(artifacts), 5)
 
     def test_rejects_explicit_model_for_wrong_business_type(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             train_all_registered_models(temp_dir)
-            coffee_model = Path(temp_dir) / "geopredict_coffee_shop_v1.pkl"
+            coffee_model = Path(temp_dir) / "geopredict_food_service_v1.pkl"
 
             with self.assertRaises(ValueError):
                 load_explicit_model(coffee_model, get_business_profile("pickup_point"))

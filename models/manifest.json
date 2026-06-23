@@ -1,183 +1,78 @@
 {
   "artifact_version": "v1",
-  "total_models": 20,
+  "total_models": 5,
   "models": [
     {
-      "business_type": "pickup_point",
-      "title": "Пункт выдачи заказов",
-      "category": "marketplace_logistics",
-      "artifact_path": "models/geopredict_pvz_v1.pkl",
+      "model_family": "pickup_point",
+      "business_types": [
+        "pickup_point"
+      ],
+      "titles": [
+        "Пункт выдачи заказов"
+      ],
+      "artifact_path": "models/geopredict_pickup_point_v1.pkl",
       "artifact_version": "v1",
       "model_type": "GradientBoostingRegressorLite",
       "model_version": "geo-boost-lite-v1"
     },
     {
-      "business_type": "coffee_shop",
-      "title": "Кофейня",
-      "category": "food_service",
-      "artifact_path": "models/geopredict_coffee_shop_v1.pkl",
+      "model_family": "food_service",
+      "business_types": [
+        "coffee_shop",
+        "beer_store",
+        "fast_food",
+        "restaurant"
+      ],
+      "titles": [
+        "Кофейня",
+        "Пивной магазин / бар",
+        "Фастфуд / шаурма",
+        "Ресторан / кафе"
+      ],
+      "artifact_path": "models/geopredict_food_service_v1.pkl",
       "artifact_version": "v1",
       "model_type": "GradientBoostingRegressorLite",
       "model_version": "geo-boost-lite-v1"
     },
     {
-      "business_type": "beer_store",
-      "title": "Пивной магазин / бар",
-      "category": "food_service",
-      "artifact_path": "models/geopredict_beer_store_v1.pkl",
+      "model_family": "convenience_retail",
+      "business_types": [
+        "pharmacy",
+        "grocery_store"
+      ],
+      "titles": [
+        "Аптека",
+        "Продуктовый магазин / магазин у дома"
+      ],
+      "artifact_path": "models/geopredict_convenience_retail_v1.pkl",
       "artifact_version": "v1",
       "model_type": "GradientBoostingRegressorLite",
       "model_version": "geo-boost-lite-v1"
     },
     {
-      "business_type": "pharmacy",
-      "title": "Аптека",
-      "category": "health_retail",
-      "artifact_path": "models/geopredict_pharmacy_v1.pkl",
+      "model_family": "personal_service",
+      "business_types": [
+        "beauty_salon"
+      ],
+      "titles": [
+        "Салон красоты / барбершоп / маникюр"
+      ],
+      "artifact_path": "models/geopredict_personal_service_v1.pkl",
       "artifact_version": "v1",
       "model_type": "GradientBoostingRegressorLite",
       "model_version": "geo-boost-lite-v1"
     },
     {
-      "business_type": "grocery_store",
-      "title": "Продуктовый магазин",
-      "category": "daily_retail",
-      "artifact_path": "models/geopredict_grocery_store_v1.pkl",
-      "artifact_version": "v1",
-      "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
-    },
-    {
-      "business_type": "bakery",
-      "title": "Пекарня",
-      "category": "food_service",
-      "artifact_path": "models/geopredict_bakery_v1.pkl",
-      "artifact_version": "v1",
-      "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
-    },
-    {
-      "business_type": "fast_food",
-      "title": "Фастфуд / шаурма",
-      "category": "food_service",
-      "artifact_path": "models/geopredict_fast_food_v1.pkl",
-      "artifact_version": "v1",
-      "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
-    },
-    {
-      "business_type": "restaurant",
-      "title": "Ресторан / кафе",
-      "category": "food_service",
-      "artifact_path": "models/geopredict_restaurant_v1.pkl",
-      "artifact_version": "v1",
-      "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
-    },
-    {
-      "business_type": "beauty_salon",
-      "title": "Салон красоты",
-      "category": "personal_service",
-      "artifact_path": "models/geopredict_beauty_salon_v1.pkl",
-      "artifact_version": "v1",
-      "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
-    },
-    {
-      "business_type": "barbershop",
-      "title": "Барбершоп",
-      "category": "personal_service",
-      "artifact_path": "models/geopredict_barbershop_v1.pkl",
-      "artifact_version": "v1",
-      "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
-    },
-    {
-      "business_type": "nail_salon",
-      "title": "Маникюр / ногтевая студия",
-      "category": "personal_service",
-      "artifact_path": "models/geopredict_nail_salon_v1.pkl",
-      "artifact_version": "v1",
-      "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
-    },
-    {
-      "business_type": "fitness_studio",
-      "title": "Фитнес / спорт-студия",
-      "category": "personal_service",
-      "artifact_path": "models/geopredict_fitness_studio_v1.pkl",
-      "artifact_version": "v1",
-      "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
-    },
-    {
-      "business_type": "medical_clinic",
-      "title": "Медицинская клиника",
-      "category": "medical_service",
-      "artifact_path": "models/geopredict_medical_clinic_v1.pkl",
-      "artifact_version": "v1",
-      "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
-    },
-    {
-      "business_type": "dental_clinic",
-      "title": "Стоматология",
-      "category": "medical_service",
-      "artifact_path": "models/geopredict_dental_clinic_v1.pkl",
-      "artifact_version": "v1",
-      "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
-    },
-    {
-      "business_type": "flower_shop",
-      "title": "Цветочный магазин",
-      "category": "specialty_retail",
-      "artifact_path": "models/geopredict_flower_shop_v1.pkl",
-      "artifact_version": "v1",
-      "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
-    },
-    {
-      "business_type": "pet_store",
-      "title": "Зоомагазин",
-      "category": "specialty_retail",
-      "artifact_path": "models/geopredict_pet_store_v1.pkl",
-      "artifact_version": "v1",
-      "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
-    },
-    {
-      "business_type": "car_service",
-      "title": "Автосервис",
-      "category": "auto_service",
-      "artifact_path": "models/geopredict_car_service_v1.pkl",
-      "artifact_version": "v1",
-      "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
-    },
-    {
-      "business_type": "dry_cleaning",
-      "title": "Химчистка / прачечная",
-      "category": "personal_service",
-      "artifact_path": "models/geopredict_dry_cleaning_v1.pkl",
-      "artifact_version": "v1",
-      "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
-    },
-    {
-      "business_type": "children_education",
-      "title": "Детский центр / образование",
-      "category": "education_service",
-      "artifact_path": "models/geopredict_children_education_v1.pkl",
-      "artifact_version": "v1",
-      "model_type": "GradientBoostingRegressorLite",
-      "model_version": "geo-boost-lite-v1"
-    },
-    {
-      "business_type": "retail",
-      "title": "Магазин у дома / розница",
-      "category": "daily_retail",
-      "artifact_path": "models/geopredict_retail_v1.pkl",
+      "model_family": "destination_service",
+      "business_types": [
+        "medical_clinic",
+        "car_service"
+      ],
+      "titles": [
+        "Медицинская клиника / стоматология",
+        "Автосервис"
+      ],
+      "artifact_path": "models/geopredict_destination_service_v1.pkl",
       "artifact_version": "v1",
       "model_type": "GradientBoostingRegressorLite",
       "model_version": "geo-boost-lite-v1"

@@ -1,15 +1,22 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+import json
 import os
+from pathlib import Path
+from typing import Literal
 
 from geopredict_ml.business import (
     UnsupportedBusinessTypeError,
     business_type_catalog,
     custom_business_candidate,
+    resolve_business_profile,
     suggest_business_profiles,
     supported_business_types,
 )
-from geopredict_ml.osm import fetch_overpass_geojson
+from geopredict_ml.geo import polygon_bbox
+from geopredict_ml.grid import AnalysisAreaTooLargeError, validate_analysis_area, validate_polygon_geometry
+from geopredict_ml.osm import OverpassFetchResult, fetch_overpass_result
 from geopredict_ml.pipeline import analyze_request
 
 
@@ -159,6 +166,24 @@ DEFAULT_CORS_ORIGINS = (
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 )
+DEFAULT_OSM_CACHE_DIR = "/tmp/geopredict-osm-cache"
+SAMPLE_REQUEST_PATH = Path(__file__).resolve().parents[1] / "data" / "sample" / "request_pvz.json"
+SAMPLE_POIS_PATH = Path(__file__).resolve().parents[1] / "data" / "sample" / "osm_pois_pvz_sample.geojson"
+
+
+@dataclass(frozen=True)
+class PoiSource:
+    geojson: dict
+    source: str
+    warnings: tuple[str, ...] = ()
+
+
+class DataSourceUnavailableError(RuntimeError):
+    pass
+
+
+class MockDataUnavailableError(ValueError):
+    pass
 
 
 def get_cors_origins() -> list[str]:
@@ -168,18 +193,43 @@ def get_cors_origins() -> list[str]:
     return [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
 
 
-def resolve_poi_source(payload: dict, fetcher=fetch_overpass_geojson) -> tuple[dict | None, list[str], list[str]]:
-    if not payload.get("use_live_osm", True):
-        return None, [], []
+def resolve_poi_source(
+    payload: dict,
+    fetcher=fetch_overpass_result,
+    mock_loader=None,
+) -> PoiSource:
+    data_mode = str(payload.get("data_mode") or "live")
+    if data_mode == "mock":
+        loader = mock_loader or _load_mock_pois
+        return PoiSource(
+            geojson=loader(payload),
+            source="mock_sample",
+            warnings=(
+                "Используются демонстрационные sample-данные ПВЗ. "
+                "Результат нельзя считать оценкой реального рынка.",
+            ),
+        )
+    if data_mode != "live":
+        raise ValueError("data_mode must be either 'live' or 'mock'")
+    if payload.get("use_live_osm") is False:
+        raise ValueError("use_live_osm=false is no longer implicit fallback; use data_mode='mock' explicitly")
 
     try:
-        return fetcher(payload["geometry"]), ["osm"], []
+        if fetcher is fetch_overpass_result:
+            fetched = fetcher(
+                payload["geometry"],
+                cache_dir=os.getenv("GEOPREDICT_OSM_CACHE_DIR", DEFAULT_OSM_CACHE_DIR),
+            )
+        else:
+            fetched = fetcher(payload["geometry"])
+        if isinstance(fetched, OverpassFetchResult):
+            return PoiSource(fetched.geojson, fetched.source, fetched.warnings)
+        return PoiSource(fetched, "osm_live")
     except Exception as exc:
-        warning = (
-            "Live OSM/Overpass data is unavailable; "
-            f"returned fallback scoring without live POI data ({_format_dependency_error(exc)})."
-        )
-        return None, ["osm_unavailable"], [warning]
+        raise DataSourceUnavailableError(
+            "Не удалось получить данные OpenStreetMap/Overpass. "
+            f"Повторите запрос позже ({_format_dependency_error(exc)})."
+        ) from exc
 
 
 def _format_dependency_error(exc: Exception) -> str:
@@ -188,6 +238,35 @@ def _format_dependency_error(exc: Exception) -> str:
     if status and reason:
         return f"HTTP {status}: {reason}"
     return str(exc) or exc.__class__.__name__
+
+
+def _load_mock_pois(payload: dict) -> dict:
+    requested_type = payload.get("business_query") if payload.get("business_type") == "custom_osm" else payload.get("business_type")
+    profile = resolve_business_profile(str(requested_type or ""), allow_custom=True)
+    if profile.business_type != "pickup_point":
+        raise MockDataUnavailableError("Mock/sample data is available only for the pickup_point demo")
+
+    requested_ring = validate_polygon_geometry(payload.get("geometry"))
+    sample_request = json.loads(SAMPLE_REQUEST_PATH.read_text(encoding="utf-8"))
+    sample_ring = validate_polygon_geometry(sample_request["geometry"])
+    if not _bboxes_intersect(polygon_bbox(requested_ring), polygon_bbox(sample_ring)):
+        raise MockDataUnavailableError(
+            "Mock/sample data covers only the bundled Moscow demo polygon. "
+            "Use live data for another territory."
+        )
+    return json.loads(SAMPLE_POIS_PATH.read_text(encoding="utf-8"))
+
+
+def _bboxes_intersect(
+    first: tuple[float, float, float, float],
+    second: tuple[float, float, float, float],
+) -> bool:
+    return not (
+        first[2] < second[0]
+        or first[0] > second[2]
+        or first[3] < second[1]
+        or first[1] > second[3]
+    )
 
 
 if FastAPI:
@@ -206,9 +285,13 @@ if FastAPI:
             examples=["pickup_point", "coffee_shop", "пивнуха"],
         )
         h3_resolution: int = Field(9, ge=7, le=10, description="H3 grid resolution. MVP default is 9.")
-        use_live_osm: bool = Field(
-            True,
-            description="When true, the API fetches OpenStreetMap POIs through Overpass before scoring.",
+        data_mode: Literal["live", "mock"] = Field(
+            "live",
+            description="live uses OSM/Overpass; mock explicitly uses the bundled PVZ demo sample.",
+        )
+        use_live_osm: bool | None = Field(
+            None,
+            description="Deprecated compatibility field. Use data_mode instead.",
         )
         allow_custom_business: bool = Field(
             True,
@@ -216,6 +299,12 @@ if FastAPI:
                 "When true, an unsupported business_type creates a custom OSM search profile instead of "
                 "returning 422."
             ),
+        )
+        business_query: str | None = Field(
+            None,
+            min_length=2,
+            max_length=120,
+            description="Required user text when business_type is custom_osm.",
         )
 
     app = FastAPI(
@@ -287,13 +376,41 @@ if FastAPI:
     def analyze_endpoint(payload: AnalyzeRequest = Body(...)) -> dict:
         try:
             payload_dict = payload.model_dump() if hasattr(payload, "model_dump") else payload.dict()
-            pois, data_sources, data_warnings = resolve_poi_source(payload_dict)
+            validate_analysis_area(
+                payload_dict["geometry"],
+                resolution=int(payload_dict.get("h3_resolution", 9)),
+            )
+            source = resolve_poi_source(payload_dict)
             return analyze_request(
                 payload_dict,
-                pois_geojson=pois,
-                data_sources=data_sources,
-                data_warnings=data_warnings,
+                pois_geojson=source.geojson,
+                data_sources=[source.source],
+                data_warnings=list(source.warnings),
             )
+        except DataSourceUnavailableError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail={
+                    "code": "osm_unavailable",
+                    "message": str(exc),
+                    "retryable": True,
+                },
+            ) from exc
+        except MockDataUnavailableError as exc:
+            raise HTTPException(
+                status_code=422,
+                detail={"code": "mock_unavailable", "message": str(exc)},
+            ) from exc
+        except AnalysisAreaTooLargeError as exc:
+            raise HTTPException(
+                status_code=413,
+                detail={
+                    "code": "analysis_area_too_large",
+                    "message": str(exc),
+                    "estimated_cells": exc.estimated_cells,
+                    "max_cells": exc.max_cells,
+                },
+            ) from exc
         except UnsupportedBusinessTypeError as exc:
             raise HTTPException(
                 status_code=422,
