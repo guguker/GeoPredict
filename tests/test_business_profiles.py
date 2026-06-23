@@ -29,6 +29,25 @@ class BusinessProfileCatalogTest(unittest.TestCase):
         self.assertEqual(get_business_profile("пивнуха").business_type, "beer_store")
         self.assertEqual(get_business_profile("ozon").business_type, "pickup_point")
         self.assertEqual(get_business_profile("стоматология").business_type, "dental_clinic")
+        self.assertEqual(get_business_profile("💅 Маникюр").business_type, "nail_salon")
+        self.assertEqual(get_business_profile("🍺 Пивной магазин").business_type, "beer_store")
+
+    def test_frontend_display_labels_resolve_to_primary_business_types(self):
+        labels = {
+            "Магазин у дома": "retail",
+            "Продуктовый магазин": "grocery_store",
+            "Фастфуд": "fast_food",
+            "Пивной магазин": "beer_store",
+            "Салон красоты": "beauty_salon",
+            "Маникюр": "nail_salon",
+            "Медицинская клиника": "medical_clinic",
+            "Цветочный магазин": "flower_shop",
+            "Автосервис": "car_service",
+            "Детский центр": "children_education",
+        }
+
+        for label, business_type in labels.items():
+            self.assertEqual(get_business_profile(label).business_type, business_type)
 
     def test_unsupported_business_type_lists_supported_values(self):
         with self.assertRaises(UnsupportedBusinessTypeError) as context:

@@ -1,6 +1,6 @@
 import unittest
 
-from geopredict_ml.business import UnsupportedBusinessTypeError
+from geopredict_ml.business import PROFILE_LIST, UnsupportedBusinessTypeError
 from geopredict_ml.pipeline import _recommendation_for_candidate, analyze_request
 
 
@@ -142,6 +142,13 @@ class AnalyzeContractTest(unittest.TestCase):
         self.assertTrue(result["metadata"]["is_custom_business"])
         self.assertEqual(result["metadata"]["business_query"], "рыболовный магазин")
         self.assertEqual(result["metadata"]["model_source"], "reference_in_memory")
+
+    def test_all_catalog_titles_use_registered_models_not_custom_fallback(self):
+        for profile in PROFILE_LIST:
+            result = analyze_request(SAMPLE_REQUEST | {"business_type": profile.title}, pois_geojson=SAMPLE_POIS)
+            self.assertEqual(result["metadata"]["business_type"], profile.business_type)
+            self.assertFalse(result["metadata"]["is_custom_business"])
+            self.assertEqual(result["metadata"]["model_source"], "registered_artifact")
 
 
 if __name__ == "__main__":

@@ -8,6 +8,7 @@ import unicodedata
 def normalize_text(value: object) -> str:
     text = unicodedata.normalize("NFKD", str(value or "")).lower()
     text = text.replace("ё", "е")
+    text = re.sub(r"[^\w\s]+", " ", text)
     return re.sub(r"\s+", " ", text).strip()
 
 
@@ -597,8 +598,16 @@ def custom_business_candidate(query: str) -> dict[str, object]:
 def get_business_profile(business_type: str) -> BusinessProfile:
     normalized = normalize_text(business_type)
     for profile in PROFILE_LIST:
-        normalized_aliases = {normalize_text(alias) for alias in profile.aliases}
-        if normalized == profile.business_type or normalized in normalized_aliases:
+        normalized_names = {
+            normalize_text(profile.business_type),
+            normalize_text(profile.title),
+            *(normalize_text(alias) for alias in profile.aliases),
+        }
+        if normalized in normalized_names:
+            return profile
+    for profile in PROFILE_LIST:
+        normalized_examples = {normalize_text(example) for example in profile.examples}
+        if normalized in normalized_examples:
             return profile
     suggestions = tuple(item["business_type"] for item in suggest_business_profiles(business_type, limit=5))
     raise UnsupportedBusinessTypeError(business_type, supported_business_types(), suggestions)
