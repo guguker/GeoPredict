@@ -4,8 +4,8 @@ import math
 from pathlib import Path
 from typing import Any
 
-from .business import BusinessProfile, business_search_summary, resolve_business_profile
-from .explain import build_explanation, build_explanation_factors
+from .business import BusinessProfile, resolve_business_profile
+from .explain import build_explanation
 from .features import compute_cell_features, normalize_geojson_pois, saturating_count
 from .geo import clamp
 from .grid import GridCell, polygon_to_grid_cells, validate_polygon_geometry
@@ -64,7 +64,6 @@ def analyze_request(
             "density_score": round(float(row["density_score"]), 3),
             "poi_counts": row["poi_counts"],
             "explanation": build_explanation(row, candidate["selection_score"], profile),
-            "explanation_factors": build_explanation_factors(row, profile),
         }
         features.append({"type": "Feature", "geometry": cell.geometry, "properties": properties})
 
@@ -88,7 +87,6 @@ def analyze_request(
             "business_category": profile.category,
             "business_query": profile.source_query,
             "is_custom_business": profile.is_custom,
-            "business_search": business_search_summary(profile),
             "data_sources": resolved_data_sources,
             "data_status": _data_status(resolved_data_sources, resolved_data_warnings),
             "data_warnings": resolved_data_warnings,

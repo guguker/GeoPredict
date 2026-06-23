@@ -9,7 +9,6 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY geopredict_ml ./geopredict_ml
-COPY business_profiles ./business_profiles
 COPY api ./api
 COPY scripts ./scripts
 COPY data/sample ./data/sample

@@ -11,16 +11,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Collect OpenStreetMap POIs for a request polygon via Overpass.")
     parser.add_argument("--request", required=True, help="Path to request JSON containing geometry.")
     parser.add_argument("--output", required=True, help="Output POI GeoJSON path.")
-    parser.add_argument("--snapshot-date", help="Optional Overpass attic date, e.g. 2024-01-01T00:00:00Z.")
-    parser.add_argument("--cache-dir", help="Optional directory for Overpass GeoJSON cache.")
     args = parser.parse_args()
 
     payload = json.loads(Path(args.request).read_text(encoding="utf-8"))
-    geojson = fetch_overpass_geojson(
-        payload["geometry"],
-        snapshot_date=args.snapshot_date,
-        cache_dir=args.cache_dir,
-    )
+    geojson = fetch_overpass_geojson(payload["geometry"])
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(geojson, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

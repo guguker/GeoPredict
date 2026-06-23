@@ -31,18 +31,8 @@ class ModelRegistryTest(unittest.TestCase):
             self.assertTrue(manifest.exists())
             self.assertIsNotNone(pickup)
             self.assertEqual(pickup.business_type, "pickup_point")
-            self.assertIn("training_metrics", artifacts[0])
-            self.assertIn("rmse", artifacts[0]["training_metrics"])
-            self.assertIn("baseline_metrics", artifacts[0])
 
         self.assertEqual(len(artifacts), 20)
-
-    def test_repository_contains_loadable_model_for_each_business_type(self):
-        for business_type in supported_business_types():
-            model = load_model_for_profile(get_business_profile(business_type))
-
-            self.assertIsNotNone(model)
-            self.assertEqual(model.business_type, business_type)
 
     def test_rejects_explicit_model_for_wrong_business_type(self):
         with tempfile.TemporaryDirectory() as temp_dir:

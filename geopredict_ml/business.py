@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-import json
-from pathlib import Path
 import re
 import unicodedata
 
@@ -10,7 +8,6 @@ import unicodedata
 def normalize_text(value: object) -> str:
     text = unicodedata.normalize("NFKD", str(value or "")).lower()
     text = text.replace("ё", "е")
-    text = re.sub(r"[^\w\s]+", " ", text)
     return re.sub(r"\s+", " ", text).strip()
 
 
@@ -107,29 +104,6 @@ DESTINATION_SERVICE_WEIGHTS = {
     "competition_penalty": -0.14,
     "norm_competition": -0.03,
 }
-
-WEIGHT_PRESETS = {
-    "pickup_point": PICKUP_POINT_WEIGHTS,
-    "food_service": FOOD_SERVICE_WEIGHTS,
-    "convenience_retail": CONVENIENCE_RETAIL_WEIGHTS,
-    "personal_service": PERSONAL_SERVICE_WEIGHTS,
-    "destination_service": DESTINATION_SERVICE_WEIGHTS,
-}
-
-DEFAULT_PROFILE_CONFIG_DIR = Path(__file__).resolve().parents[1] / "business_profiles"
-OSM_SEARCH_TAG_KEYS = (
-    "name",
-    "brand",
-    "operator",
-    "shop",
-    "amenity",
-    "craft",
-    "tourism",
-    "leisure",
-    "healthcare",
-    "sport",
-    "office",
-)
 
 
 PICKUP_POINT_PROFILE = BusinessProfile(
@@ -545,7 +519,7 @@ CUSTOM_OSM_HINTS = (
 )
 
 
-FALLBACK_PROFILE_LIST = (
+PROFILE_LIST = (
     PICKUP_POINT_PROFILE,
     COFFEE_SHOP_PROFILE,
     BEER_STORE_PROFILE,
@@ -568,94 +542,6 @@ FALLBACK_PROFILE_LIST = (
     RETAIL_PROFILE,
 )
 
-
-def load_business_profiles(config_dir: str | Path = DEFAULT_PROFILE_CONFIG_DIR) -> tuple[BusinessProfile, ...]:
-    """Load editable business profiles from JSON-compatible YAML files.
-
-    The project keeps `.yml` files for product editing, but the format is deliberately
-    JSON-compatible so the runtime does not need an extra YAML dependency.
-    """
-    directory = Path(config_dir)
-    if not directory.exists():
-        return FALLBACK_PROFILE_LIST
-
-    specs: list[dict[str, object]] = []
-    for path in sorted(directory.glob("*.yml")):
-        specs.extend(_profile_specs_from_config(path))
-    if not specs:
-        return FALLBACK_PROFILE_LIST
-
-    profiles = tuple(_profile_from_config(spec) for spec in specs)
-    _validate_profile_catalog(profiles)
-    return profiles
-
-
-def _profile_specs_from_config(path: Path) -> list[dict[str, object]]:
-    try:
-        raw = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        raise ValueError(f"Business profile config {path} must be JSON-compatible YAML") from exc
-
-    if isinstance(raw, list):
-        specs = raw
-    elif isinstance(raw, dict):
-        specs = raw.get("profiles", [])
-    else:
-        raise ValueError(f"Business profile config {path} must contain a list or a profiles object")
-
-    if not isinstance(specs, list):
-        raise ValueError(f"Business profile config {path} field 'profiles' must be a list")
-    return [spec for spec in specs if isinstance(spec, dict)]
-
-
-def _profile_from_config(spec: dict[str, object]) -> BusinessProfile:
-    target_weights = spec.get("target_weights", "convenience_retail")
-    if isinstance(target_weights, str):
-        weights = WEIGHT_PRESETS.get(target_weights)
-        if weights is None:
-            raise ValueError(f"Unknown target_weights preset: {target_weights!r}")
-    elif isinstance(target_weights, dict):
-        weights = {str(key): float(value) for key, value in target_weights.items()}
-    else:
-        raise ValueError("target_weights must be a preset name or weight mapping")
-
-    return _profile(
-        str(spec["business_type"]),
-        str(spec["title"]),
-        _tuple_from_config(spec.get("aliases", ())),
-        _tuple_from_config(spec.get("competitor_keywords", ())),
-        _tuple_from_config(spec.get("competitor_tag_values", ())),
-        int(spec.get("radius_m", 500)),
-        float(spec.get("competition_scale", 5.0)),
-        int(spec.get("competition_soft_limit", 4)),
-        int(spec.get("validation_competitor_count", 2)),
-        weights,
-        str(spec.get("category", "local_business")),
-        _tuple_from_config(spec.get("examples", ())),
-    )
-
-
-def _tuple_from_config(value: object) -> tuple[str, ...]:
-    if value is None:
-        return ()
-    if isinstance(value, str):
-        return (value,)
-    if isinstance(value, list | tuple):
-        return tuple(str(item) for item in value)
-    raise ValueError(f"Expected string list in business profile config, got {type(value)!r}")
-
-
-def _validate_profile_catalog(profiles: tuple[BusinessProfile, ...]) -> None:
-    seen: set[str] = set()
-    for profile in profiles:
-        if not profile.business_type:
-            raise ValueError("business_type is required in every business profile")
-        if profile.business_type in seen:
-            raise ValueError(f"Duplicate business_type in profile config: {profile.business_type}")
-        seen.add(profile.business_type)
-
-
-PROFILE_LIST = load_business_profiles()
 PROFILES = {profile.business_type: profile for profile in PROFILE_LIST}
 
 
@@ -705,46 +591,14 @@ def custom_business_candidate(query: str) -> dict[str, object]:
         "source_query": profile.source_query,
         "osm_keywords": list(profile.competitor_keywords[:12]),
         "osm_tag_values": list(profile.competitor_tag_values),
-        "search_summary": business_search_summary(profile),
-    }
-
-
-def business_search_summary(profile: BusinessProfile) -> dict[str, object]:
-    mode = "custom_osm" if profile.is_custom else "fixed_profile"
-    keywords = list(profile.competitor_keywords[:12])
-    tag_values = list(profile.competitor_tag_values[:12])
-    if profile.is_custom:
-        message = (
-            "Пользовательский тип не найден в фиксированном каталоге; "
-            "ищем похожие OSM-точки по строке запроса, названиям, брендам и тегам."
-        )
-    else:
-        message = "Используется фиксированный бизнес-профиль из каталога."
-
-    return {
-        "mode": mode,
-        "title": profile.title,
-        "source_query": profile.source_query,
-        "osm_tag_keys": list(OSM_SEARCH_TAG_KEYS),
-        "osm_keywords": keywords,
-        "osm_tag_values": tag_values,
-        "message": message,
     }
 
 
 def get_business_profile(business_type: str) -> BusinessProfile:
     normalized = normalize_text(business_type)
     for profile in PROFILE_LIST:
-        normalized_names = {
-            normalize_text(profile.business_type),
-            normalize_text(profile.title),
-            *(normalize_text(alias) for alias in profile.aliases),
-        }
-        if normalized in normalized_names:
-            return profile
-    for profile in PROFILE_LIST:
-        normalized_examples = {normalize_text(example) for example in profile.examples}
-        if normalized in normalized_examples:
+        normalized_aliases = {normalize_text(alias) for alias in profile.aliases}
+        if normalized == profile.business_type or normalized in normalized_aliases:
             return profile
     suggestions = tuple(item["business_type"] for item in suggest_business_profiles(business_type, limit=5))
     raise UnsupportedBusinessTypeError(business_type, supported_business_types(), suggestions)

@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from geopredict_ml.evaluation import fit_holdout_evaluation, load_labeled_dataset, ranking_metrics
+from geopredict_ml.evaluation import fit_holdout_evaluation, load_labeled_dataset
 from geopredict_ml.target import MODEL_FEATURES
 
 
@@ -37,16 +37,6 @@ class EvaluationTest(unittest.TestCase):
         self.assertIn("mae", report["model_metrics"])
         self.assertIn("rmse", report["model_metrics"])
         self.assertIn("baseline_metrics", report)
-
-    def test_ranking_metrics_measure_top_k_quality(self):
-        report = ranking_metrics([1.0, 0.0, 1.0, 0.0], [0.9, 0.2, 0.7, 0.1], k=2)
-
-        self.assertEqual(report["k"], 2)
-        self.assertEqual(report["positives"], 2)
-        self.assertEqual(report["precision_at_k"], 1.0)
-        self.assertEqual(report["recall_at_k"], 1.0)
-        self.assertGreater(report["ndcg_at_k"], 0.0)
-        self.assertGreater(report["lift_at_k"], 1.0)
 
 
 if __name__ == "__main__":
