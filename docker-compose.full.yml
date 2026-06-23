@@ -1,0 +1,66 @@
+services:
+  geopredict-api:
+    build:
+      context: .
+    environment:
+      PYTHONUNBUFFERED: "1"
+      GEOPREDICT_CORS_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000"
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  auth-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - auth_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  auth-app:
+    build:
+      context: ../express-auth-service
+    environment:
+      NODE_ENV: development
+      PORT: "8001"
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: auth-db
+      DB_PORT: "5432"
+      DB_DATABASE: postgres
+      JWT_ACCESS_SECRET: fafawatafapepeshneine
+      JWT_REFRESH_SECRET: bulijiliubabisydvaveselixgusyaodinbeluydrugoyseriy
+    ports:
+      - "8001:8001"
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  geo-mark-front:
+    build:
+      context: ../geo_mark_front
+      args:
+        API_BASE_URL: http://localhost:8000
+        AUTH_API_URL: http://localhost:8001/api
+    environment:
+      API_BASE_URL: http://localhost:8000
+      AUTH_API_URL: http://localhost:8001/api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - geopredict-api
+      - auth-app
+    restart: unless-stopped
+
+volumes:
+  auth_postgres_data:
