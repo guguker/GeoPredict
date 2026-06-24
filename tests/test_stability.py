@@ -1,7 +1,12 @@
 import math
 import unittest
 
-from geopredict_ml.grid import AnalysisAreaTooLargeError, polygon_to_grid_cells, validate_polygon_geometry
+from geopredict_ml.grid import (
+    AnalysisAreaTooLargeError,
+    polygon_to_grid_cells,
+    suggest_h3_resolution,
+    validate_polygon_geometry,
+)
 from geopredict_ml.osm import build_overpass_query
 
 
@@ -65,6 +70,17 @@ class StabilityTest(unittest.TestCase):
 
         with self.assertRaises(AnalysisAreaTooLargeError):
             polygon_to_grid_cells(geometry, resolution=9, max_cells=1_000)
+
+    def test_suggests_coarser_h3_resolution_for_large_area(self):
+        self.assertEqual(
+            suggest_h3_resolution(estimated_cells=1_521, max_cells=1_000, resolution=9),
+            8,
+        )
+
+    def test_does_not_suggest_resolution_below_supported_range(self):
+        self.assertIsNone(
+            suggest_h3_resolution(estimated_cells=9_000, max_cells=1_000, resolution=7)
+        )
 
 
 if __name__ == "__main__":

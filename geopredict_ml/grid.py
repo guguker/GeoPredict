@@ -41,9 +41,20 @@ H3_APPROX_AREA_KM2 = {
 
 
 class AnalysisAreaTooLargeError(ValueError):
-    def __init__(self, estimated_cells: int, max_cells: int) -> None:
+    def __init__(
+        self,
+        estimated_cells: int,
+        max_cells: int,
+        resolution: int | None = None,
+    ) -> None:
         self.estimated_cells = estimated_cells
         self.max_cells = max_cells
+        self.resolution = resolution
+        self.suggested_resolution = (
+            suggest_h3_resolution(estimated_cells, max_cells, resolution)
+            if resolution is not None
+            else None
+        )
         super().__init__(
             f"Selected area requires approximately {estimated_cells} cells; "
             f"the synchronous limit is {max_cells}. Draw a smaller area or use a lower H3 resolution."
@@ -65,7 +76,7 @@ def polygon_to_grid_cells(geometry: dict, resolution: int = 9, max_cells: int = 
     h3_cells = _polygon_to_h3_cells_if_available(ring, resolution)
     if h3_cells:
         if len(h3_cells) > max_cells:
-            raise AnalysisAreaTooLargeError(len(h3_cells), max_cells)
+            raise AnalysisAreaTooLargeError(len(h3_cells), max_cells, resolution)
         return h3_cells
 
     return _polygon_to_fallback_hex_cells(ring, resolution, max_cells)
@@ -79,8 +90,25 @@ def validate_analysis_area(
     ring = validate_polygon_geometry(geometry)
     estimated_cells = _estimate_cell_count(ring, resolution)
     if estimated_cells > max_cells:
-        raise AnalysisAreaTooLargeError(estimated_cells, max_cells)
+        raise AnalysisAreaTooLargeError(estimated_cells, max_cells, resolution)
     return ring
+
+
+def suggest_h3_resolution(
+    estimated_cells: int,
+    max_cells: int,
+    resolution: int,
+) -> int | None:
+    current_area = H3_APPROX_AREA_KM2.get(resolution)
+    if current_area is None:
+        return None
+
+    estimated_area_km2 = estimated_cells * current_area
+    for candidate in range(resolution - 1, min(H3_APPROX_AREA_KM2) - 1, -1):
+        candidate_cells = math.ceil(estimated_area_km2 / H3_APPROX_AREA_KM2[candidate])
+        if candidate_cells <= max_cells:
+            return candidate
+    return None
 
 
 def _polygon_to_h3_cells_if_available(ring: list[list[float]], resolution: int) -> list[GridCell]:
@@ -158,7 +186,7 @@ def _polygon_to_fallback_hex_cells(ring: list[list[float]], resolution: int, max
         row += 1
 
     if len(cells) > max_cells:
-        raise AnalysisAreaTooLargeError(len(cells), max_cells)
+        raise AnalysisAreaTooLargeError(len(cells), max_cells, resolution)
     if not cells:
         cells.append(_fallback_cell(center_lon, center_lat, radius_m, resolution))
     return cells

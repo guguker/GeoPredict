@@ -411,6 +411,8 @@ if FastAPI:
                     "message": str(exc),
                     "estimated_cells": exc.estimated_cells,
                     "max_cells": exc.max_cells,
+                    "current_resolution": exc.resolution,
+                    "suggested_resolution": exc.suggested_resolution,
                 },
             ) from exc
         except UnsupportedBusinessTypeError as exc:
