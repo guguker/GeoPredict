@@ -176,6 +176,7 @@ class PoiSource:
     geojson: dict
     source: str
     warnings: tuple[str, ...] = ()
+    fetched_at: float | None = None
 
 
 class DataSourceUnavailableError(RuntimeError):
@@ -223,7 +224,7 @@ def resolve_poi_source(
         else:
             fetched = fetcher(payload["geometry"])
         if isinstance(fetched, OverpassFetchResult):
-            return PoiSource(fetched.geojson, fetched.source, fetched.warnings)
+            return PoiSource(fetched.geojson, fetched.source, fetched.warnings, fetched.fetched_at)
         return PoiSource(fetched, "osm_live")
     except Exception as exc:
         raise DataSourceUnavailableError(
@@ -386,6 +387,7 @@ if FastAPI:
                 pois_geojson=source.geojson,
                 data_sources=[source.source],
                 data_warnings=list(source.warnings),
+                data_fetched_at=source.fetched_at,
             )
         except DataSourceUnavailableError as exc:
             raise HTTPException(

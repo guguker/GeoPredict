@@ -84,6 +84,12 @@ class AnalyzeContractTest(unittest.TestCase):
         self.assertIn("density_score", props)
         self.assertIn("poi_counts", props)
         self.assertIsInstance(props["explanation"], list)
+        self.assertEqual(props["total_candidates"], result["metadata"]["total_hexagons"])
+        self.assertEqual(props["competition_radius_m"], 500)
+        self.assertEqual(props["competition_soft_limit"], 3)
+        self.assertIsInstance(props["explanation_summary"], str)
+        self.assertGreater(len(props["explanation_summary"]), 20)
+        self.assertIn("competitor", props["competition_metric"])
 
     def test_top_candidate_matches_best_ranked_feature(self):
         result = analyze_request(SAMPLE_REQUEST, pois_geojson=SAMPLE_POIS)
@@ -94,6 +100,10 @@ class AnalyzeContractTest(unittest.TestCase):
         self.assertEqual(top["rank"], 1)
         self.assertEqual(top["h3_id"], ranked_first["properties"]["h3_id"])
         self.assertEqual(top["suitability"], ranked_first["properties"]["suitability"])
+        self.assertEqual(top["total_candidates"], result["metadata"]["total_hexagons"])
+        self.assertIn("explanation_summary", top)
+        self.assertIn("competition", top)
+        self.assertIn("traffic_potential", top)
 
     def test_empty_pois_disable_recommendations(self):
         result = analyze_request(

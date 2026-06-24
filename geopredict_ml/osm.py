@@ -27,6 +27,7 @@ class OverpassFetchResult:
     source: str
     endpoint: str | None = None
     warnings: tuple[str, ...] = ()
+    fetched_at: float | None = None
 
 
 def build_overpass_query(geometry: dict[str, Any]) -> str:
@@ -60,7 +61,7 @@ def fetch_overpass_result(
     resolved_cache_dir = cache_dir or os.getenv("GEOPREDICT_OSM_CACHE_DIR")
     cached = _read_cache(query, resolved_cache_dir, cache_ttl_seconds, allow_stale=False)
     if cached:
-        return OverpassFetchResult(cached, source="osm_cache")
+        return OverpassFetchResult(cached[0], source="osm_cache", fetched_at=cached[1])
 
     endpoints = overpass_urls or OVERPASS_URLS
     open_url = opener or request.urlopen
@@ -77,17 +78,24 @@ def fetch_overpass_result(
             with open_url(http_request, timeout=timeout_seconds) as response:
                 raw = json.loads(response.read().decode("utf-8"))
             geojson = overpass_json_to_geojson(raw)
-            _write_cache(query, geojson, resolved_cache_dir)
-            return OverpassFetchResult(geojson, source="osm_live", endpoint=endpoint)
+            fetched_at = time.time()
+            _write_cache(query, geojson, resolved_cache_dir, fetched_at=fetched_at)
+            return OverpassFetchResult(
+                geojson,
+                source="osm_live",
+                endpoint=endpoint,
+                fetched_at=fetched_at,
+            )
         except (error.HTTPError, error.URLError, TimeoutError, OSError, ValueError, json.JSONDecodeError) as exc:
             failures.append(f"{endpoint}: {_format_fetch_error(exc)}")
 
     stale = _read_cache(query, resolved_cache_dir, cache_ttl_seconds, allow_stale=True)
     if stale:
         return OverpassFetchResult(
-            stale,
+            stale[0],
             source="osm_cache_stale",
             warnings=("Live OSM is unavailable; an expired cached snapshot was used.",),
+            fetched_at=stale[1],
         )
 
     raise RuntimeError("All Overpass endpoints failed: " + " | ".join(failures))
@@ -136,7 +144,7 @@ def _read_cache(
     cache_dir: str | Path | None,
     cache_ttl_seconds: int,
     allow_stale: bool,
-) -> dict[str, Any] | None:
+) -> tuple[dict[str, Any], float] | None:
     path = _cache_path(query, cache_dir)
     if not path or not path.exists():
         return None
@@ -148,12 +156,17 @@ def _read_cache(
         geojson = payload["geojson"]
         if geojson.get("type") != "FeatureCollection":
             return None
-        return geojson
+        return geojson, float(payload["fetched_at"])
     except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
         return None
 
 
-def _write_cache(query: str, geojson: dict[str, Any], cache_dir: str | Path | None) -> None:
+def _write_cache(
+    query: str,
+    geojson: dict[str, Any],
+    cache_dir: str | Path | None,
+    fetched_at: float | None = None,
+) -> None:
     path = _cache_path(query, cache_dir)
     if not path:
         return
@@ -161,7 +174,7 @@ def _write_cache(query: str, geojson: dict[str, Any], cache_dir: str | Path | No
         path.parent.mkdir(parents=True, exist_ok=True)
         temporary = path.with_suffix(".tmp")
         temporary.write_text(
-            json.dumps({"fetched_at": time.time(), "geojson": geojson}, ensure_ascii=False),
+            json.dumps({"fetched_at": fetched_at or time.time(), "geojson": geojson}, ensure_ascii=False),
             encoding="utf-8",
         )
         temporary.replace(path)

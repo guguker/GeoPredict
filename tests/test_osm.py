@@ -70,7 +70,9 @@ class OverpassQueryTest(unittest.TestCase):
         self.assertEqual(len(attempts), 2)
         self.assertEqual(first.source, "osm_live")
         self.assertEqual(first.endpoint, "https://second.invalid")
+        self.assertIsInstance(first.fetched_at, float)
         self.assertEqual(cached.source, "osm_cache")
+        self.assertEqual(cached.fetched_at, first.fetched_at)
         self.assertEqual(len(cached.geojson["features"]), 1)
 
 

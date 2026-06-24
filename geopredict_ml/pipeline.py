@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from .business import BusinessProfile, resolve_business_profile
-from .explain import build_explanation
+from .explain import build_explanation, build_explanation_summary
 from .features import compute_cell_features, normalize_geojson_pois, saturating_count
 from .geo import clamp
 from .grid import GridCell, polygon_to_grid_cells, validate_polygon_geometry
@@ -20,6 +20,7 @@ def analyze_request(
     max_cells: int = 1_000,
     data_sources: list[str] | None = None,
     data_warnings: list[str] | None = None,
+    data_fetched_at: float | None = None,
 ) -> dict[str, Any]:
     geometry = request_payload.get("geometry")
     validate_polygon_geometry(geometry)
@@ -58,6 +59,7 @@ def analyze_request(
         properties = {
             "h3_id": cell.h3_id,
             "rank": rank_info["rank"],
+            "total_candidates": len(cells),
             "top_percentile": round(rank_info["rank"] / max(1, len(cells)), 4),
             "suitability": round(candidate["selection_score"], 3),
             "success_probability": round(candidate["selection_score"], 3),
@@ -67,6 +69,9 @@ def analyze_request(
             "recommendation": recommendation["code"],
             "recommendation_label": recommendation["label"],
             "competition": row["competition"],
+            "competition_metric": "competitor_poi_count_within_radius",
+            "competition_radius_m": profile.radius_m,
+            "competition_soft_limit": profile.competition_soft_limit,
             "norm_competition": round(float(row["norm_competition"]), 3),
             "competition_penalty": round(float(row["competition_penalty"]), 3),
             "market_validation": round(float(row["market_validation"]), 3),
@@ -74,6 +79,11 @@ def analyze_request(
             "density_score": round(float(row["density_score"]), 3),
             "poi_counts": row["poi_counts"],
             "explanation": build_explanation(row, candidate["selection_score"], profile),
+            "explanation_summary": build_explanation_summary(
+                row,
+                candidate["selection_score"],
+                profile,
+            ),
         }
         features.append({"type": "Feature", "geometry": cell.geometry, "properties": properties})
 
@@ -82,7 +92,14 @@ def analyze_request(
     avg_model_score = round(sum(model_predictions) / len(model_predictions), 3) if model_predictions else 0.0
     grid_backend = cells[0].backend if cells else "unknown"
     top_candidates = (
-        _top_candidates(cells, model_predictions, candidate_scores, ranked_predictions)
+        _top_candidates(
+            cells,
+            feature_rows,
+            model_predictions,
+            candidate_scores,
+            ranked_predictions,
+            profile,
+        )
         if recommendations_available
         else []
     )
@@ -126,6 +143,7 @@ def analyze_request(
             "data_sources": resolved_data_sources,
             "data_status": _data_status(resolved_data_sources, len(pois)),
             "data_warnings": resolved_data_warnings,
+            "data_fetched_at": data_fetched_at,
             "poi_count": len(pois),
             "recommendations_available": recommendations_available,
             "model_active": True,
@@ -242,24 +260,41 @@ def _recommendation_for_candidate(candidate: dict[str, float], rank: int, total_
 
 def _top_candidates(
     cells: list[GridCell],
+    feature_rows: list[dict[str, Any]],
     model_predictions: list[float],
     candidate_scores: list[dict[str, float]],
     ranks: dict[str, dict[str, int]],
+    profile: BusinessProfile,
     limit: int = 10,
 ) -> list[dict[str, Any]]:
-    ordered = sorted(zip(cells, model_predictions, candidate_scores), key=lambda item: ranks[item[0].h3_id]["rank"])
+    ordered = sorted(
+        zip(cells, feature_rows, model_predictions, candidate_scores),
+        key=lambda item: ranks[item[0].h3_id]["rank"],
+    )
     candidates = []
-    for cell, model_score, candidate in ordered[:limit]:
+    for cell, row, model_score, candidate in ordered[:limit]:
         rank = ranks[cell.h3_id]["rank"]
         recommendation = _recommendation_for_candidate(candidate, rank, len(cells))
         candidates.append(
             {
                 "h3_id": cell.h3_id,
                 "rank": rank,
+                "total_candidates": len(cells),
                 "suitability": round(candidate["selection_score"], 3),
                 "model_score": round(model_score, 3),
                 "data_confidence": round(candidate["data_confidence"], 3),
                 "recommendation": recommendation["code"],
+                "competition": row["competition"],
+                "competition_radius_m": profile.radius_m,
+                "traffic_potential": round(float(row["traffic_potential"]), 3),
+                "density_score": round(float(row["density_score"]), 3),
+                "poi_counts": row["poi_counts"],
+                "explanation": build_explanation(row, candidate["selection_score"], profile),
+                "explanation_summary": build_explanation_summary(
+                    row,
+                    candidate["selection_score"],
+                    profile,
+                ),
                 "center": {"lon": round(cell.center_lon, 7), "lat": round(cell.center_lat, 7)},
             }
         )
