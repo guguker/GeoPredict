@@ -2,22 +2,26 @@
 
 Актуально для текущей кодовой базы в:
 
-- `/Users/guguk/Documents/ml_here` — ML API;
-- `/Users/guguk/Documents/geo_mark_front` — интерфейс;
-- `/Users/guguk/Documents/express-auth-service` — авторизация.
+- `GeoPredict` — ML API;
+- `geo_mark_front` — интерфейс;
+- `express-auth-service` — авторизация.
+
+Для самостоятельного запуска ML API достаточно этого репозитория: см. [README](../README.md). Интерфейс и авторизация — отдельные companion-сервисы; приведённый ниже полный запуск требует их исходников.
 
 ## 1. Запуск всего проекта
 
 ### Требования
 
 - установлен и запущен Docker Desktop;
-- три папки находятся рядом в `/Users/guguk/Documents`;
+- три репозитория находятся в соседних каталогах `GeoPredict`, `geo_mark_front` и `express-auth-service`;
 - свободны порты `3000`, `8000`, `8001`, `5432`.
 
 ### Основная команда
 
 ```bash
-cd /Users/guguk/Documents/ml_here
+cd GeoPredict
+cp .env.example .env
+# Задайте пароли и два независимых JWT-секрета в .env
 docker compose -f docker-compose.full.yml up -d --build
 ```
 
@@ -89,14 +93,14 @@ docker compose -f docker-compose.full.yml up -d --build geo-mark-front
 ML:
 
 ```bash
-cd /Users/guguk/Documents/ml_here
+cd GeoPredict
 python3 -m unittest discover -s tests
 ```
 
 Frontend:
 
 ```bash
-cd /Users/guguk/Documents/geo_mark_front
+cd geo_mark_front
 npm test -- --watchAll=false
 ```
 
@@ -463,7 +467,7 @@ Mock включается только явно через `data_mode="mock"`, �
 Команда:
 
 ```bash
-cd /Users/guguk/Documents/ml_here
+cd GeoPredict
 python3 -m scripts.evaluate_model \
   --dataset data/processed/pvz_features.csv \
   --model models/geopredict_pickup_point_v1.pkl

@@ -1,28 +1,19 @@
 # GeoPredict API
 
-Swagger UI доступен по адресу:
+API принимает GeoJSON `Polygon` и возвращает ранжированные ячейки в `FeatureCollection`. Оценка строится на синтетическом proxy-target; поля score не являются прогнозом выручки или вероятностью успеха бизнеса.
 
-```text
-http://localhost:8000/docs
-```
-
-OpenAPI JSON:
-
-```text
-http://localhost:8000/openapi.json
-```
+После запуска `python -m uvicorn api.analyze:app --host 127.0.0.1 --port 8000` доступны [Swagger UI](http://127.0.0.1:8000/docs) и [OpenAPI JSON](http://127.0.0.1:8000/openapi.json).
 
 ## Эндпоинты
 
-### `GET /health`
+| Метод | Путь | Назначение |
+|---|---|---|
+| GET | `/health` | Доступность приложения |
+| GET | `/business-types` | 10 фиксированных бизнес-профилей |
+| GET | `/business-types?query=кофе` | Подсказки из каталога и `custom_candidate` |
+| POST | `/analyze` | Анализ территории |
 
-Проверка доступности сервиса.
-
-### `POST /analyze`
-
-Анализирует пользовательский `Polygon`, строит H3-сетку и возвращает GeoJSON `FeatureCollection`.
-
-Минимальный запрос:
+## Запрос анализа
 
 ```json
 {
@@ -31,86 +22,46 @@ http://localhost:8000/openapi.json
     "coordinates": [[[37.6173, 55.7558], [37.6273, 55.7558], [37.6273, 55.7658], [37.6173, 55.7658], [37.6173, 55.7558]]]
   },
   "business_type": "pickup_point",
-  "h3_resolution": 9
+  "h3_resolution": 9,
+  "data_mode": "live",
+  "allow_custom_business": true
 }
 ```
 
-Для локального теста без Overpass можно добавить:
+Координаты идут в порядке `[longitude, latitude]`. Разрешение H3 — от 7 до 10; синхронный анализ ограничен 1 000 ячейками.
 
-```json
-{
-  "use_live_osm": false
-}
-```
+`business_type` принимает код или алиас, например `pickup_point`, `pvz`, `ozon`, `coffee_shop`, `кофейня`, `pharmacy`, `стоматология`. С неизвестным типом при `allow_custom_business=true` создаётся общий профиль `custom_osm`; он ищет подходящие OSM-объекты по строке запроса и не имеет собственной обученной модели. Для явного `business_type="custom_osm"` передайте `business_query` длиной 2–120 символов.
 
-`business_type` можно передавать как основной код или алиас. Например: `pickup_point`, `pvz`, `ozon`, `coffee_shop`, `кофейня`, `beer_store`, `пивнуха`, `dental_clinic`, `стоматология`.
+При `allow_custom_business=false` неизвестный профиль возвращает `422 unsupported_business_type` со списком допустимых значений и подсказками.
 
-Если `business_type` не найден в фиксированном каталоге, `/analyze` по умолчанию создает `custom_osm` профиль и ищет похожие объекты в OSM по пользовательской строке, названиям, брендам и тегам. Для строгого режима каталога передайте:
+### Источники данных
 
-```json
-{
-  "allow_custom_business": false
-}
-```
+- `data_mode="live"` (по умолчанию): Overpass, свежий файловый кэш или резервный stale-кэш с предупреждением.
+- `data_mode="mock"`: включённый sample для ПВЗ в области московского демо-полигона. Используйте [готовый запрос](../data/sample/request_pvz_mock.json).
+- `use_live_osm` — устаревшее поле. `use_live_osm=false` не включает демо и отклоняется; используйте `data_mode`.
 
-В строгом режиме неподдержанный тип бизнеса вернет `422`:
+Если Overpass и кэш недоступны, API возвращает `503` с `detail.code="osm_unavailable"` и `retryable=true`. Live-запрос не подменяется демонстрационными POI.
 
-```json
-{
-  "detail": {
-    "code": "unsupported_business_type",
-    "message": "Unsupported business_type: '...'",
-    "supported_business_types": ["pickup_point", "coffee_shop", "beer_store"],
-    "suggestions": ["coffee_shop"]
-  }
-}
-```
+## Ответ
 
-### `GET /business-types`
+- `features[]`: геометрия ячеек; `rank`, `suitability`, `model_score`, `selection_score`, `data_confidence`, рекомендации, `poi_counts`, объяснения.
+- `metadata.top_candidates`: до 10 лучших кандидатов.
+- `metadata.recommendation_counts`: распределение по категориям рекомендаций.
+- `metadata.recommendations_available`: доступны ли рекомендации при имеющихся POI.
+- `metadata.data_status`: `live`, `cached`, `mock` или `insufficient`.
+- `metadata.data_sources`, `data_warnings`, `data_fetched_at`: источник и состояние данных.
+- `metadata.target_type`: `proxy_location_success`.
+- `metadata.grid_backend`: фактически использованная сетка — `h3` или fallback.
+- `metadata.model_source`: зарегистрированный артефакт, явно указанный артефакт или reference-модель в памяти.
 
-Возвращает фиксированный каталог из 20 поддерживаемых типов бизнеса для UI-списка. Опционально принимает `query`: тогда `business_types` содержит найденные подсказки из фиксированного каталога, а `custom_candidate` описывает свободный пользовательский запрос для OSM-поиска:
+`model_score` — сырой выход бустинга. `selection_score` и `suitability` — итог после эвристических поправок. Поле `success_probability` является алиасом `selection_score`: название сохранено для совместимости, **статистической калибровки вероятностей нет**. `data_confidence` также является эвристикой.
 
-```text
-GET /business-types?query=кофе
-```
-
-```json
-{
-  "total": 1,
-  "business_types": [
-    {
-      "business_type": "pickup_point",
-      "title": "Пункт выдачи заказов",
-      "category": "marketplace_logistics",
-      "aliases": ["pickup_point", "pvz", "пвз", "ozon"],
-      "examples": ["Ozon", "Wildberries", "Яндекс Маркет", "СДЭК", "Boxberry"],
-      "radius_m": 500
-    }
-  ],
-  "custom_candidate": {
-    "business_type": "custom_osm",
-    "title": "Пользовательский бизнес: кофе",
-    "category": "custom_osm_search",
-    "source_query": "кофе",
-    "is_custom": true
-  }
-}
-```
-
-Ответ `POST /analyze` содержит:
-
-- `features[]` — GeoJSON-ячейки с v2-оценкой `suitability`, сырым `model_score`, строгим `selection_score`, уверенностью данных `data_confidence`, рангом `rank`, кодом рекомендации `recommendation`, объяснениями и счетчиками POI.
-- `metadata.top_candidates` — до 10 лучших ячеек по оценке модели для быстрого вывода списка приоритетных зон.
-- `metadata.recommendation_counts` — количество ячеек в группах `high_priority`, `promising`, `manual_review`, `low_priority`.
-- `metadata.data_status` — `live`, `degraded` или `empty`. При ошибках Overpass, включая `429 Too Many Requests`, API возвращает `degraded` вместо HTTP 502.
-
-Пример свойств одной ячейки:
+Форма свойств одной ячейки (значения иллюстративны, не являются метриками качества):
 
 ```json
 {
   "h3_id": "891f1d489ffffff",
   "rank": 1,
-  "top_percentile": 0.01,
   "suitability": 0.742,
   "success_probability": 0.742,
   "model_score": 0.812,
@@ -119,16 +70,25 @@ GET /business-types?query=кофе
   "recommendation": "high_priority",
   "recommendation_label": "Приоритетно рассмотреть",
   "competition": 3,
-  "traffic_potential": 0.691,
-  "density_score": 0.638,
-  "poi_counts": {
-    "competitors": 3,
-    "public_transport": 4,
-    "residential": 15
-  },
-  "explanation": [
-    "Перспективная локация",
-    "Конкуренция есть, но зона не выглядит перенасыщенной"
-  ]
+  "poi_counts": {"competitors": 3, "public_transport": 4, "residential": 15},
+  "explanation": ["Конкуренция есть, но зона не выглядит перенасыщенной"]
 }
 ```
+
+При отсутствии POI `recommendations_available=false`, top-кандидаты пусты, а ячейки получают `insufficient_data`.
+
+## Ошибки
+
+| HTTP | Код / причина |
+|---|---|
+| 400 | Некорректная геометрия или несовместимые параметры анализа |
+| 413 | `analysis_area_too_large`: превышен лимит ячеек; ответ содержит suggested resolution |
+| 422 | Ошибка схемы запроса, `unsupported_business_type` или `mock_unavailable` |
+| 503 | `osm_unavailable`: нет доступных OSM-данных и кэша |
+| 502 | Другая ошибка зависимости при анализе |
+
+## Настройка
+
+`GEOPREDICT_CORS_ORIGINS` задаёт разрешённые origins через запятую. По умолчанию разрешены localhost/127.0.0.1 на портах 3000 и 5173. `GEOPREDICT_OSM_CACHE_DIR` задаёт каталог кэша (по умолчанию `/tmp/geopredict-osm-cache`).
+
+Формулы признаков, веса и политика ранжирования: [техническое руководство](TECHNICAL_GUIDE.md).

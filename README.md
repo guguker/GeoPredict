@@ -1,283 +1,178 @@
-# GeoPredict ML
+<p align="center">
+  <img src="docs/assets/geopredict-banner.svg" alt="GeoPredict — геоданные, признаки и ранжирование локаций" width="100%">
+</p>
 
-Полная инструкция по запуску, формулам, признакам, порогам и ограничениям:
-[`docs/TECHNICAL_GUIDE.md`](docs/TECHNICAL_GUIDE.md).
+# GeoPredict
 
-Первая ML-версия для оценки перспективности открытия ПВЗ по пользовательскому полигону.
+**Геомаркетинговый ML-прототип: от полигона на карте до объяснимого рейтинга локаций.**
 
-## Что делает пайплайн
+GeoPredict разбивает выбранную территорию на H3-ячейки, извлекает признаки окружения из OpenStreetMap и ранжирует участки для разных типов бизнеса. Внутри — собственный градиентный бустинг на NumPy, модельный registry и FastAPI. Результат возвращается в GeoJSON и подходит для отображения на карте.
 
-1. Принимает запрос с `geometry`, `business_type` и `h3_resolution`.
-2. Делит территорию на H3-ячейки. Если библиотека `h3` не установлена, использует совместимую fallback-сетку для локальной разработки.
-3. Берет POI из OpenStreetMap/Overpass или из локального GeoJSON.
-4. Считает признаки для ПВЗ: конкуренты, транспорт, жилое окружение, офисы, торговые якоря, плотность POI.
-5. Обучает или загружает `GradientBoostingRegressorLite`.
-6. Возвращает GeoJSON `FeatureCollection` для карты с ранжированием ячеек и списком лучших кандидатов.
+**Статус:** исследовательский прототип с синтетической целевой переменной. Оценка отражает заданную proxy-модель привлекательности территории; она не является прогнозом выручки или вероятностью успеха бизнеса.
 
-## Почему ПВЗ сделан отдельно
+[Быстрый старт](#быстрый-старт) · [API](#api) · [Модель и оценка](#модель-и-оценка) · [Техническое руководство](docs/TECHNICAL_GUIDE.md)
 
-ПВЗ оценивается не как обычный магазин. Для Ozon, Wildberries, Яндекс Маркета, СДЭК, Boxberry, PickPoint и похожих брендов важны:
+## Возможности
 
-- жилая плотность;
-- пешая и транспортная доступность;
-- торговые и сервисные точки притяжения;
-- офисный дневной поток;
-- наличие конкурентов как сигнал подтвержденного спроса;
-- штраф за перенасыщение конкурентами.
+| Компонент | Реализация |
+|---|---|
+| Геообработка | GeoJSON Polygon → H3, разрешения 7–10, до 1 000 ячеек на запрос |
+| Признаки | 10 признаков: конкуренция, плотность POI, жильё, транспорт, офисы, торговые и образовательные объекты |
+| ML | Градиентный бустинг из decision stumps на NumPy; 5 семейств моделей для 10 бизнес-профилей |
+| Ранжирование | Итоговый score с поправками на полноту данных и насыщение конкурентами, top-кандидаты и объяснения |
+| Данные | Overpass API, файловый кэш, резервный endpoint, локальный GeoJSON для воспроизводимого демо |
+| Интерфейсы | Python CLI, FastAPI, OpenAPI/Swagger, Docker |
 
-## Формат запроса
+Поддерживаются ПВЗ, кофейни, пивные магазины/бары, аптеки, продуктовые магазины, фастфуд, рестораны, салоны красоты, клиники и автосервисы. Свободный запрос создаёт общий `custom_osm`-профиль; отдельной обученной модели для него нет.
 
-```json
-{
-  "geometry": {
-    "type": "Polygon",
-    "coordinates": [[[37.6173, 55.7558], [37.6273, 55.7558], [37.6273, 55.7658], [37.6173, 55.7658], [37.6173, 55.7558]]]
-  },
-  "business_type": "pickup_point",
-  "h3_resolution": 9
-}
+**Стек:** Python 3.11+, NumPy, pandas, H3, Pydantic, FastAPI, Uvicorn, GeoJSON, OpenStreetMap/Overpass, Docker Compose.
+
+## Как устроен анализ
+
+```mermaid
+flowchart LR
+    A[GeoJSON Polygon + бизнес-профиль] --> B[H3-сетка]
+    C[Overpass / локальный GeoJSON] --> D[Нормализация POI]
+    B --> E[10 геопризнаков]
+    D --> E
+    E --> F[NumPy gradient boosting]
+    R[Registry: 5 семейств] --> F
+    F --> G[Поправки и ранжирование]
+    E --> G
+    G --> H[GeoJSON + top-кандидаты + объяснения]
 ```
 
-`business_type` принимает один из 10 фиксированных профилей или его алиас на русском/английском. ПВЗ остается общей группой: `pickup_point`, а внутри профиля учитываются Ozon, Wildberries, Яндекс Маркет, СДЭК, Boxberry и похожие операторы.
+Основные части отделены друг от друга: геометрия и сетка → источники данных → признаки → модель → политика выбора. Подробные формулы и пороги приведены в [техническом руководстве](docs/TECHNICAL_GUIDE.md).
 
-Поддерживаемые основные значения:
+## Быстрый старт
 
-- `pickup_point` — Пункт выдачи заказов
-- `coffee_shop` — Кофейня
-- `beer_store` — Пивной магазин / бар
-- `pharmacy` — Аптека
-- `grocery_store` — Продуктовый магазин
-- `bakery` — Пекарня
-- `fast_food` — Фастфуд / шаурма
-- `restaurant` — Ресторан / кафе
-- `beauty_salon` — Красота / барбершоп / маникюр
-- `medical_clinic` — Клиника / стоматология
-- `car_service` — Автосервис
-
-Для фронта есть справочник:
-
-```text
-GET /business-types
-GET /business-types?query=кофе
-```
-
-Если пользователь введет свободный текст, фронт может сначала запросить `GET /business-types?query=...` и показать подсказки. По умолчанию `/analyze` тоже принимает неподдержанный `business_type`: API создаёт временный `custom_osm` профиль и ищет похожие точки в OSM по `name`, `brand`, `shop`, `amenity` и другим тегам. В ответе тогда будет `metadata.is_custom_business = true`, `business_type = "custom_osm"` и `business_query` с исходной строкой.
-
-Если нужен строго только фиксированный каталог, передайте:
-
-```json
-{
-  "allow_custom_business": false
-}
-```
-
-Тогда неподдержанный тип вернет `422` с кодом `unsupported_business_type`, списком допустимых `supported_business_types` и массивом `suggestions`.
-
-## Быстрый локальный прогон без сети
+Команды выполняются из корня репозитория. Для демонстрационного анализа сеть нужна только при установке зависимостей: POI и модель уже включены в репозиторий.
 
 ```bash
-python -m scripts.train_model \
-  --business-type pickup_point \
-  --output models/geopredict_pvz_v1.pkl
+git clone https://github.com/guguker/GeoPredict.git
+cd GeoPredict
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
 
 python -m scripts.analyze_polygon \
   --request data/sample/request_pvz.json \
   --pois data/sample/osm_pois_pvz_sample.geojson \
-  --model models/geopredict_pvz_v1.pkl
+  --model models/geopredict_pickup_point_v1.pkl \
+  --output out/pvz_analysis.geojson
 ```
 
-## Модельные артефакты
+На Windows окружение активируется командой `.venv\Scripts\activate`. Отдельная инструкция для live-запуска: [RUN_LIVE_WITHOUT_DOCKER.md](RUN_LIVE_WITHOUT_DOCKER.md).
 
-Десять бизнес-профилей объединены в пять модельных семейств, поэтому в
-`models/` лежит пять основных `.pkl`. API выбирает артефакт семейства по
-каноническому `business_type`; если файла нет, временно обучает
-reference-модель в памяти.
+В `out/pvz_analysis.geojson` появится `FeatureCollection`: геометрия ячеек, признаки, ранги и сводка `metadata.top_candidates`. Пример чтения результата:
 
-Перегенерировать весь registry:
+```python
+import json
+from pathlib import Path
 
-```bash
-python -m scripts.train_all_models --models-dir models
+result = json.loads(Path("out/pvz_analysis.geojson").read_text())
+print("Источник:", result["metadata"]["data_sources"])
+print("Сетка:", result["metadata"]["grid_backend"])
+for candidate in result["metadata"]["top_candidates"][:3]:
+    print(candidate["rank"], candidate["h3_id"], candidate["suitability"])
 ```
 
-Список артефактов и бизнес-типов хранится в `models/manifest.json`. Для обратной совместимости ПВЗ-модель остается в `models/geopredict_pvz_v1.pkl`.
+CLI с локальным GeoJSON передаёт POI напрямую; пометка источника в CLI не удостоверяет актуальность данных. Для API демонстрационный режим явно обозначен `data_mode="mock"`.
 
-## Структура проекта
-
-```text
-api/              FastAPI-приложение и Swagger/OpenAPI контракт
-geopredict_ml/    ML-пайплайн, признаки, бизнес-профили, сетка, OSM и модель
-scripts/          CLI-команды для сбора OSM, обучения, анализа и сборки датасета
-data/sample/      Пример запроса и локальные sample POI для запуска без сети
-data/processed/   Примеры рассчитанных признаков и GeoJSON-результата
-models/           Сохраненные артефакты моделей и manifest
-tests/            Контрактные, feature- и model-тесты
-docs/             Дополнительная API-документация
-```
-
-## Тесты
-
-```bash
-python -m unittest discover tests
-```
-
-## Датасет для команды
-
-```bash
-python -m scripts.build_dataset \
-  --request data/sample/request_pvz.json \
-  --pois data/sample/osm_pois_pvz_sample.geojson \
-  --output data/processed/pvz_features.csv
-```
-
-CSV будет содержать одну строку на H3-ячейку: признаки, counts по POI и `target_success`.
-
-## Оценка модели
-
-Для текущего MVP метрики считаются по колонке `target_success`. Это proxy-таргет, поэтому такие метрики показывают, насколько модель воспроизводит заданную геомаркетинговую формулу успешности. Когда появятся исторические данные по фактическим открытиям ПВЗ, можно добавить колонку вроде `actual_success` и передать ее через `--target-column`.
-
-Оценить сохраненный артефакт модели на размеченном CSV:
-
-```bash
-python -m scripts.evaluate_model \
-  --dataset data/processed/pvz_features.csv \
-  --model models/geopredict_pvz_v1.pkl
-```
-
-Сделать holdout-проверку: обучить свежую модель на train-части CSV и посчитать метрики на test-части:
-
-```bash
-python -m scripts.evaluate_model \
-  --dataset data/processed/pvz_features.csv \
-  --fit-holdout \
-  --test-size 0.25 \
-  --seed 42
-```
-
-В отчете выводятся `mae`, `mse`, `rmse`, `median_absolute_error`, `max_error`, `bias`, `mape`, `r2`, а также baseline по среднему значению target.
-
-## Сбор данных из OSM
-
-```bash
-python -m scripts.collect_osm \
-  --request data/sample/request_pvz.json \
-  --output data/raw/osm_pois.geojson
-```
-
-Затем:
-
-```bash
-python -m scripts.analyze_polygon \
-  --request data/sample/request_pvz.json \
-  --pois data/raw/osm_pois.geojson \
-  --model models/geopredict_pvz_v1.pkl \
-  --output data/processed/pvz_analysis.geojson
-```
+Для свежих OSM-данных замените `--pois ...` на `--live-osm`. Доступность и полнота результата зависят от Overpass и покрытия OSM.
 
 ## API
 
-Если установлен FastAPI:
+```bash
+python -m uvicorn api.analyze:app --host 127.0.0.1 --port 8000
+```
+
+- [Swagger UI](http://127.0.0.1:8000/docs) — интерактивные запросы.
+- `GET /health` — доступность API.
+- `GET /business-types` — каталог профилей и подсказки через `?query=`.
+- `POST /analyze` — анализ полигона.
+
+В другом терминале отправьте готовый запрос для демо без Overpass:
 
 ```bash
-uvicorn api.analyze:app --reload
+curl -X POST http://127.0.0.1:8000/analyze \
+  -H 'Content-Type: application/json' \
+  --data-binary @data/sample/request_pvz_mock.json
 ```
 
-`POST /analyze` принимает тот же JSON. По умолчанию API пробует получить POI из OSM/Overpass.
+Для live-режима используйте `@data/sample/request_pvz.json`. Если Overpass недоступен и подходящего кэша нет, API возвращает `503 osm_unavailable`. Демо доступно только для ПВЗ в области включённого московского полигона.
 
-Для локальной разработки API разрешает CORS-запросы с `http://localhost:3000`, `http://127.0.0.1:3000`, `http://localhost:5173` и `http://127.0.0.1:5173`. Если фронт живет на другом адресе, передайте список через `GEOPREDICT_CORS_ORIGINS`, например `GEOPREDICT_CORS_ORIGINS=http://localhost:8080`.
+| Поле ответа | Смысл |
+|---|---|
+| `model_score` | Сырой выход регрессионной модели |
+| `suitability`, `selection_score` | Итоговая proxy-оценка от 0 до 1 |
+| `data_confidence` | Эвристическая оценка полноты сигналов |
+| `rank` | Позиция ячейки внутри выбранного полигона |
+| `explanation`, `poi_counts` | Факторы рекомендации и число объектов окружения |
+| `metadata.data_status` | `live`, `cached`, `mock` или `insufficient` |
 
-В ответе каждая ячейка содержит `rank`, `suitability`, `success_probability`, `model_score`, `selection_score`, `data_confidence`, `recommendation`, `recommendation_label`, счетчики POI и объяснения. `model_score` — сырой ML-score, а `suitability`/`selection_score` — более строгая v2-оценка для карты и топа: она учитывает силу локальных сигналов, уверенность данных, насыщение зоны и относительный ранг внутри выбранного полигона.
+Поле `success_probability` сохранено в контракте как алиас итогового score. **Это не статистически откалиброванная вероятность.** Полный контракт и ошибки: [docs/API.md](docs/API.md).
 
-Если Overpass временно отвечает ошибкой вроде `429 Too Many Requests`, API больше не падает `502`. Он возвращает GeoJSON с `metadata.data_status = "degraded"`, `data_sources = ["osm_unavailable"]` и предупреждением в `metadata.data_warnings`.
+## Модель и оценка
 
-Короткий пример свойств одной ячейки:
+[`GradientBoostingRegressorLite`](geopredict_ml/model.py) последовательно обучает небольшие деревья из одного разбиения на остатках текущего прогноза. По умолчанию используется 48 деревьев, learning rate 0.12 и до 12 порогов на признак. Пять артефактов и их бизнес-профили перечислены в [manifest](models/manifest.json).
 
-```json
-{
-  "h3_id": "891f1d489ffffff",
-  "rank": 1,
-  "top_percentile": 0.01,
-  "suitability": 0.742,
-  "success_probability": 0.742,
-  "model_score": 0.812,
-  "selection_score": 0.742,
-  "data_confidence": 0.781,
-  "recommendation": "high_priority",
-  "recommendation_label": "Приоритетно рассмотреть",
-  "competition": 3,
-  "traffic_potential": 0.691,
-  "density_score": 0.638,
-  "poi_counts": {
-    "competitors": 3,
-    "public_transport": 4,
-    "residential": 15
-  },
-  "explanation": [
-    "Перспективная локация",
-    "Конкуренция есть, но зона не выглядит перенасыщенной"
-  ]
-}
+Reference-обучение использует **синтетическую сетку признаков**. `target_success` вычисляется формулой с весами бизнес-профиля. Поэтому метрики оценивают приближение этой формулы, а не успешность реальных открытий.
+
+```bash
+# Holdout с фиксированным seed и сравнением с train-mean baseline
+python -m scripts.evaluate_model \
+  --dataset data/processed/pvz_features.csv \
+  --fit-holdout --test-size 0.25 --seed 42
+
+# При необходимости пересоздать registry моделей
+python -m scripts.train_all_models --models-dir models
 ```
 
-Сводка лучших зон приходит в `metadata`:
+Демонстрационный CSV содержит 12 строк: его достаточно для проверки процесса, но недостаточно для вывода об обобщающей способности. В сохранённой оценке артефакта mean baseline оказался лучше модели; значения и ограничения приведены в [разделе оценки](docs/TECHNICAL_GUIDE.md#16-метрики-качества-модели). Собственных заявлений о точности на реальном бизнесе проект не делает.
 
-```json
-{
-  "top_candidates": [
-    {
-      "h3_id": "891f1d489ffffff",
-      "rank": 1,
-      "suitability": 0.742,
-      "model_score": 0.812,
-      "data_confidence": 0.781,
-      "recommendation": "high_priority",
-      "center": {"lon": 37.6173, "lat": 55.7558}
-    }
-  ],
-  "data_status": "live",
-  "poi_count": 1284,
-  "selection_policy": "strict_v2_rank_confidence_saturation",
-  "recommendation_counts": {
-    "high_priority": 4,
-    "promising": 21,
-    "manual_review": 14,
-    "low_priority": 3
-  }
-}
-```
+Для полноценной проверки нужны исторические результаты работы точек, временное и географическое разделение данных, сравнение с простыми baseline и анализ утечек между соседними локациями.
 
-Swagger UI:
+## Docker и интеграция
 
-```text
-http://localhost:8000/docs
-```
-
-OpenAPI JSON:
-
-```text
-http://localhost:8000/openapi.json
-```
-
-## Docker
+API запускается независимо от других сервисов:
 
 ```bash
 docker compose up --build
 ```
 
-После запуска:
+`docker-compose.full.yml` — дополнительный локальный сценарий с картографическим frontend, отдельным auth-сервисом и PostgreSQL. **Frontend и auth-код не входят в этот репозиторий.** Для этого сценария нужны соседние каталоги `../geo_mark_front` и `../express-auth-service`, а также собственные значения в `.env`:
 
-```text
-API: http://localhost:8000
-Swagger: http://localhost:8000/docs
-Health: http://localhost:8000/health
+```bash
+cp .env.example .env
+# Задайте локальные пароли и два независимых JWT-секрета в .env
+docker compose -f docker-compose.full.yml up --build
 ```
 
-## Важная формулировка для защиты
+Настройки CORS и кэша описаны в [документации зависимостей](docs/DEPENDENCIES.md). Полный compose предназначен для локальной разработки; рекомендации для публичного развёртывания находятся в [deployment checklist](docs/LEGAL_DEPLOYMENT_CHECKLIST.md).
 
-Модель не прогнозирует фактическую будущую выручку конкретного предпринимателя. Она рассчитывает вероятность успешности локации на основе внешних геомаркетинговых факторов: конкуренции, инфраструктуры, транспортной доступности, плотности POI и proxy-показателей спроса.
+## Структура и проверка
 
-## Ограничения MVP
+```text
+geopredict_ml/    Геометрия, признаки, модели, registry и ранжирование
+api/             FastAPI и валидация запросов
+scripts/         CLI: сбор POI, датасет, обучение, анализ и оценка
+data/sample/     Локальные данные и примеры запросов
+data/processed/  Сохранённые демонстрационные результаты
+models/          Пять модельных артефактов и manifest
+tests/           Контракты, признаки, модели, OSM и устойчивость
+docs/            Формулы, API и инструкции по интеграции
+```
 
-- Данные OSM могут быть неполными: отсутствие POI в выгрузке не всегда означает отсутствие объекта в реальности.
-- Overpass API может быть медленным или временно недоступным, поэтому для демо и тестов предусмотрен локальный sample GeoJSON.
-- `target_success` является proxy-таргетом, построенным из геомаркетинговых факторов, а не фактической исторической выручкой.
-- Результат модели стоит использовать как предварительный скоринг территории; финальное решение об открытии ПВЗ требует проверки помещения, арендной ставки, входной группы, видимости и операционных условий.
+```bash
+python -m unittest discover -s tests
+```
+
+## Границы применения
+
+- OSM не гарантирует полноту POI; отсутствие объекта в выгрузке не доказывает его отсутствие на местности.
+- `traffic_potential` — вычисляемый proxy-признак, а не измеренный пешеходный трафик.
+- Рейтинг зависит от границ полигона и разрешения сетки. При отсутствии `h3` есть fallback-сетка; её тип виден в ответе.
+- В модели нет аренды, выручки, доходов населения и истории открытий/закрытий. Выбор помещения требует дополнительных данных и проверки на месте.
+
+Данные OpenStreetMap предоставляются [участниками OpenStreetMap](https://www.openstreetmap.org/copyright) на условиях ODbL.

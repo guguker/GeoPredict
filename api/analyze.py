@@ -49,7 +49,7 @@ REQUEST_EXAMPLE = {
     },
     "business_type": "pickup_point",
     "h3_resolution": 9,
-    "use_live_osm": True,
+    "data_mode": "live",
     "allow_custom_business": True,
 }
 
@@ -107,7 +107,7 @@ RESPONSE_EXAMPLE = {
         "model_type": "GradientBoostingRegressorLite",
         "model_version": "geo-boost-lite-v1",
         "model_source": "registered_artifact",
-        "model_artifact_path": "models/geopredict_pvz_v1.pkl",
+        "model_artifact_path": "models/geopredict_pickup_point_v1.pkl",
         "target_type": "proxy_location_success",
         "grid_backend": "h3",
         "top_candidates": [
@@ -132,33 +132,10 @@ RESPONSE_EXAMPLE = {
 }
 
 BUSINESS_TYPES_EXAMPLE = {
-    "total": 20,
-    "business_types": [
-        {
-            "business_type": "pickup_point",
-            "title": "Пункт выдачи заказов",
-            "category": "marketplace_logistics",
-            "aliases": ["pickup_point", "pvz", "пвз", "ozon", "wildberries"],
-            "examples": ["Ozon", "Wildberries", "Яндекс Маркет", "СДЭК", "Boxberry"],
-            "radius_m": 500,
-        },
-        {
-            "business_type": "coffee_shop",
-            "title": "Кофейня",
-            "category": "food_service",
-            "aliases": ["coffee_shop", "coffee", "cafe", "кофейня", "кофе"],
-            "examples": ["кофейня у дома", "кофе с собой", "specialty coffee"],
-            "radius_m": 350,
-        },
-    ],
-    "custom_candidate": {
-        "business_type": "custom_osm",
-        "title": "Пользовательский бизнес: кофе",
-        "category": "custom_osm_search",
-        "source_query": "кофе",
-        "is_custom": True,
-    },
+    "total": len(business_type_catalog()),
+    "business_types": business_type_catalog(),
 }
+
 
 DEFAULT_CORS_ORIGINS = (
     "http://localhost:3000",
@@ -314,7 +291,7 @@ if FastAPI:
         description=(
             "API для геомаркетингового анализа территории. "
             "Сервис принимает GeoJSON Polygon, строит H3-сетку, собирает/использует OSM POI "
-            "и возвращает GeoJSON FeatureCollection с ML-оценкой успешности локации."
+            "и возвращает GeoJSON FeatureCollection с proxy-рейтингом локаций."
         ),
         docs_url="/docs",
         redoc_url="/redoc",

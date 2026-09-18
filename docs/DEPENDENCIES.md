@@ -2,13 +2,13 @@
 
 Документ фиксирует прямые библиотеки, рантаймы и внешние сервисы, которые сейчас используются в общем проекте:
 
-- `/Users/guguk/Documents/ml_here` — ML backend.
-- `/Users/guguk/Documents/express-auth-service` — auth API.
-- `/Users/guguk/Documents/geo_mark_front` — frontend.
+- `GeoPredict` — ML backend.
+- `express-auth-service` — auth API.
+- `geo_mark_front` — frontend.
 
 ## ML Backend
 
-Папка: `/Users/guguk/Documents/ml_here`
+Папка: `GeoPredict`
 
 ### Python Packages
 
@@ -73,7 +73,7 @@ Python 3.11 slim
 
 ## Auth Service
 
-Папка: `/Users/guguk/Documents/express-auth-service`
+Папка: `express-auth-service`
 
 ### Node Packages
 
@@ -122,7 +122,7 @@ Swagger UI
 
 ## Frontend
 
-Папка: `/Users/guguk/Documents/geo_mark_front`
+Папка: `geo_mark_front`
 
 ### Runtime Packages
 
@@ -188,7 +188,7 @@ PDF export
 
 ## Full Local Stack
 
-Файл запуска: `/Users/guguk/Documents/ml_here/docker-compose.full.yml`
+Файл запуска: `GeoPredict/docker-compose.full.yml`
 
 ```text
 geopredict-api    FastAPI ML backend, port 8000

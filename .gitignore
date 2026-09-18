@@ -4,3 +4,10 @@ __pycache__/
 .mypy_cache/
 .venv/
 .DS_Store
+
+# Local configuration and generated runs
+.env
+.env.*
+!.env.example
+/out/
+*.zip
